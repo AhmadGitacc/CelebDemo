@@ -6,9 +6,8 @@ import PageTransition from '@/components/ui-custom/PageTransition';
 import ClientDashboard from '@/components/dashboard/ClientDashboard';
 import CelebrityDashboard from '@/components/dashboard/CelebrityDashboard';
 import AdminDashboard from '@/components/dashboard/AdminDashboard';
-import ChatSystem from '@/components/chat/ChatSystem';
 import { useAuth } from '@/contexts/AuthContext';
-import { User, Award, Shield, MessageSquare, Wallet } from 'lucide-react';
+import { User, Award, Shield, Wallet } from 'lucide-react';
 import DigitalWallet from '@/components/payment/Wallet';
 
 const Dashboard: React.FC = () => {
@@ -62,7 +61,7 @@ const Dashboard: React.FC = () => {
               </TabsList>
             </Tabs>
 
-            {user?.role !== 'admin' && (
+            {user?.role !== 'admin' && user?.role !== 'celebrity' && (
               <Button
                 variant="outline"
                 onClick={() => navigate('/search')}

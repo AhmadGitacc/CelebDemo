@@ -56,7 +56,8 @@ const Footer: React.FC = () => {
                 </Link>
               </li> */}
               <li>
-                <Link to="#how-it-works" className="text-primary-foreground/70 hover:text-accent transition-colors">
+                <Link to="/#how-it-works"
+                 className="text-primary-foreground/70 hover:text-accent transition-colors">
                   How It Works
                 </Link>
               </li>
@@ -77,17 +78,6 @@ const Footer: React.FC = () => {
                 </Link>
               </li>
               {/*
-              <li>
-                <Link to="/careers" className="text-primary-foreground/70 hover:text-accent transition-colors">
-                  Careers
-                </Link>
-              </li>
-              
-               <li>
-                <Link to="/blog" className="text-primary-foreground/70 hover:text-accent transition-colors">
-                  Blog
-                </Link>
-              </li> 
               <li>
                 <Link to="/press" className="text-primary-foreground/70 hover:text-accent transition-colors">
                   Press

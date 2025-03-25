@@ -15,7 +15,7 @@ const DigitalWallet = () => {
             <h1 className="text-3xl font-bold tracking-tight text-center mb-6 ">CelebConnect Wallet</h1>
 
             {/* Balance Display */}
-            <div className="bg-gray-100 dark:bg-gray-800 p-6 rounded-lg flex justify-between items-center">
+            <div className="bg-purple-300 dark:bg-gray-800 p-6 rounded-lg flex justify-between items-center">
                 <span className="text-2xl font-semibold">
                     {showBalance ? `$${balance.toFixed(2)}` : "****"}
                 </span>
@@ -47,7 +47,8 @@ const DigitalWallet = () => {
 
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {/* Send Money */}
-                    
+
+                    {user?.role !== 'celebrity' && (
                         <Dialog>
                             <DialogTrigger asChild>
                                 <Button variant="outline" className="w-full">Send Money</Button>
@@ -67,28 +68,28 @@ const DigitalWallet = () => {
                                 <Button className="w-full bg-primary text-white hover:bg-primary-dark">Confirm Transfer</Button>
                             </DialogContent>
                         </Dialog>
-                    
+                    )}
                     {/* Fund Wallet */}
                     {user?.role !== 'celebrity' && (
                         <Dialog>
-                        <DialogTrigger asChild>
-                            <Button variant="outline" className="w-full">Fund Wallet</Button>
-                        </DialogTrigger>
-                        <DialogContent className="max-w-md">
-                            <h3 className="text-lg font-semibold mb-4">Fund Your Wallet</h3>
-                            <select className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary">
-                                <option value="card">Credit/Debit Card</option>
-                                <option value="bank">Bank Transfer</option>
-                                <option value="crypto">Cryptocurrency</option>
-                            </select>
-                            <input
-                                type="number"
-                                placeholder="Amount"
-                                className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
-                            />
-                            <Button className="w-full bg-primary text-white hover:bg-primary-dark">Add Funds</Button>
-                        </DialogContent>
-                    </Dialog>
+                            <DialogTrigger asChild>
+                                <Button variant="outline" className="w-full">Fund Wallet</Button>
+                            </DialogTrigger>
+                            <DialogContent className="max-w-md">
+                                <h3 className="text-lg font-semibold mb-4">Fund Your Wallet</h3>
+                                <select className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary">
+                                    <option value="card">Credit/Debit Card</option>
+                                    <option value="bank">Bank Transfer</option>
+                                    <option value="crypto">Cryptocurrency</option>
+                                </select>
+                                <input
+                                    type="number"
+                                    placeholder="Amount"
+                                    className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                                />
+                                <Button className="w-full bg-primary text-white hover:bg-primary-dark">Add Funds</Button>
+                            </DialogContent>
+                        </Dialog>
                     )}
                     {/* Withdraw Funds */}
                     <Dialog>

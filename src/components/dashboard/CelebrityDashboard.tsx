@@ -35,11 +35,14 @@ import {
   Trash2,
   Settings,
   CheckSquare,
-  Square
+  Square,
+  Delete,
+  Trash
 } from 'lucide-react';
 import BookingCalendar from '@/components/booking/BookingCalendar';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogTrigger } from '../ui/dialog';
 
 const CelebrityDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
@@ -635,7 +638,7 @@ const CelebrityDashboard: React.FC = () => {
             </div>
 
             <div className="md:w-1/2 space-y-6">
-              <h2 className="text-xl font-semibold">Booking Settings</h2>
+              {/* <h2 className="text-xl font-semibold">Booking Settings</h2>
               <GlassCard className="p-6">
                 <h3 className="font-medium mb-4">General Settings</h3>
                 <div className="space-y-4">
@@ -699,7 +702,7 @@ const CelebrityDashboard: React.FC = () => {
                 <div className="mt-6">
                   <Button>Save Settings</Button>
                 </div>
-              </GlassCard>
+              </GlassCard> */}
 
               <h2 className="text-xl font-semibold">Upcoming Bookings</h2>
               <GlassCard className="p-5">
@@ -818,7 +821,7 @@ const CelebrityDashboard: React.FC = () => {
                 </table>
               </div>
             </GlassCard>
-                    
+
             {/* <h2 className="text-xl font-semibold">Your Packages</h2>
             <div className="space-y-4">
               {packages.map((pkg) => (
@@ -912,10 +915,6 @@ const CelebrityDashboard: React.FC = () => {
                     Verified Celebrity
                   </Badge>
 
-                  <Button className="w-full">
-                    <Edit className="h-4 w-4 mr-2" />
-                    Edit Profile
-                  </Button>
                 </div>
               </GlassCard>
 
@@ -1050,7 +1049,7 @@ const CelebrityDashboard: React.FC = () => {
               </GlassCard>
 
               <GlassCard className="p-6">
-                <h3 className="font-medium mb-4">Services & Offerings</h3>
+                <h3 className="font-medium mb-4">Services & Packages</h3>
                 <div className="space-y-4">
                   {packages.map((pkg) => (
                     <div key={pkg.id} className="flex items-center justify-between p-3 rounded-md bg-background">
@@ -1067,16 +1066,72 @@ const CelebrityDashboard: React.FC = () => {
                           </p>
                         </div>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        <Edit className="h-4 w-4" />
-                      </Button>
+                      <div>
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button variant="ghost" size="sm">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-md">
+                            <h3 className="text-lg font-semibold mb-4">Edit Service/Package</h3>
+                            <form action="">
+                              <input
+                                type="text"
+                                placeholder="Package Eg. Standard Performance"
+                                className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                              <input
+                                type="number"
+                                placeholder="Price of Package"
+                                className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Package Description"
+                                className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                              />
+                              <Button className="w-full bg-primary text-white hover:bg-accent">Update Service</Button>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+
+                        <Button variant="ghost" size="sm">
+                          <Trash className="h-4 w-4 text-red-700" />
+                        </Button>
+                      </div>
                     </div>
                   ))}
 
-                  <Button variant="outline" className="w-full">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Add Service
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <PlusCircle className="h-4 w-4 mr-2" />
+                        Add Service
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-md">
+                      <h3 className="text-lg font-semibold mb-4">Add Service/Package</h3>
+                      <form action="">
+                        <input
+                          type="text"
+                          placeholder="Package Eg. Standard Performance"
+                          className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Price of Package"
+                          className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Package Description"
+                          className="w-full p-3 border rounded mb-3 focus:outline-none focus:ring-2 focus:ring-primary"
+                        />
+                        <Button className="w-full bg-primary text-white hover:bg-accent">Add Service</Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </GlassCard>
             </div>

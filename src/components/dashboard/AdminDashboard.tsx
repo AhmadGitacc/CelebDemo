@@ -7,6 +7,8 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import AdminCelebrityUpload from './AdminCelebrityUpload';
+import { Dialog, DialogTrigger, DialogContent } from '@radix-ui/react-dialog';
+import { Edit } from 'lucide-react';
 
 const data = [
   { name: 'Jan', bookings: 40, revenue: 2400 },
@@ -38,19 +40,19 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <div className="space-y-6">
-      <Tabs 
-        value={activeTab} 
-        onValueChange={setActiveTab} 
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
         className="space-y-4"
       >
-        <TabsList className="grid grid-cols-5 w-full max-w-4xl">
+        <TabsList className="w-full mb-6 flex gap-2 overflow-x-auto sm:grid sm:grid-cols-5 sm:gap-0">
           <TabsTrigger value="overview">Overview</TabsTrigger>
           <TabsTrigger value="users">Users</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="payments">Payments</TabsTrigger>
           <TabsTrigger value="add-celebrity">Add Celebrity</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="overview" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
             <Card>
@@ -106,7 +108,7 @@ const AdminDashboard: React.FC = () => {
               </CardContent>
             </Card>
           </div>
-          
+
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
@@ -183,7 +185,7 @@ const AdminDashboard: React.FC = () => {
             </Card>
           </div>
         </TabsContent>
-        
+
         <TabsContent value="users" className="space-y-4">
           <Card className="overflow-hidden">
             <CardHeader>
@@ -213,9 +215,9 @@ const AdminDashboard: React.FC = () => {
                         <td className="py-3 px-4 capitalize">{user.role}</td>
                         <td className="py-3 px-4">
                           <Badge variant={
-                            user.status === 'active' ? 'default' : 
-                            user.status === 'inactive' ? 'secondary' : 
-                            'outline'
+                            user.status === 'active' ? 'default' :
+                              user.status === 'inactive' ? 'secondary' :
+                                'outline'
                           }>
                             {user.status}
                           </Badge>
@@ -232,8 +234,18 @@ const AdminDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="bookings" className="space-y-4">
+          <Card className='w-fit'>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Current Wallet Balance
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">$0.00</div>
+            </CardContent>
+          </Card>
           <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Bookings Management</CardTitle>
@@ -243,6 +255,7 @@ const AdminDashboard: React.FC = () => {
             </CardHeader>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
+
                 <table className="w-full border-collapse">
                   <thead>
                     <tr className="bg-secondary border-b">
@@ -263,10 +276,10 @@ const AdminDashboard: React.FC = () => {
                         <td className="py-3 px-4">{booking.celebrity}</td>
                         <td className="py-3 px-4">
                           <Badge variant={
-                            booking.status === 'confirmed' ? 'default' : 
-                            booking.status === 'completed' ? 'secondary' : 
-                            booking.status === 'cancelled' ? 'destructive' : 
-                            'outline'
+                            booking.status === 'confirmed' ? 'default' :
+                              booking.status === 'completed' ? 'secondary' :
+                                booking.status === 'cancelled' ? 'destructive' :
+                                  'outline'
                           }>
                             {booking.status}
                           </Badge>
@@ -284,7 +297,7 @@ const AdminDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="payments" className="space-y-4">
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
@@ -294,7 +307,7 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
+                <div className="text-2xl font-bold">$0.00</div>
                 <p className="text-xs text-muted-foreground">
                   +20.1% from last month
                 </p>
@@ -307,27 +320,15 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$33,923.92</div>
+                <div className="text-2xl font-bold">$0.00</div>
                 <p className="text-xs text-muted-foreground">
                   75% of total revenue
                 </p>
               </CardContent>
             </Card>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">
-                  Platform Fees
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">$11,307.97</div>
-                <p className="text-xs text-muted-foreground">
-                  25% of total revenue
-                </p>
-              </CardContent>
-            </Card>
+
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Payment Transactions</CardTitle>
@@ -395,7 +396,7 @@ const AdminDashboard: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
-        
+
         <TabsContent value="add-celebrity">
           <AdminCelebrityUpload />
         </TabsContent>

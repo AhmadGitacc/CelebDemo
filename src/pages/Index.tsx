@@ -39,7 +39,7 @@ const Index: React.FC = () => {
                   <Link to="/search">Browse Celebrities</Link>
                 </Button>
                 <Button variant="outline" size="lg" className="rounded-full">
-                  <Link to="/sign-up">Login as Celebrity</Link>
+                  <Link to="/login">Login as Celebrity</Link>
                 </Button>
               </div>
             </div>
