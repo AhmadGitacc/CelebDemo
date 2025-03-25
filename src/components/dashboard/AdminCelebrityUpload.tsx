@@ -1,0 +1,194 @@
+import React, { useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import ImageUpload from '@/components/ui-custom/ImageUpload';
+import { useToast } from '@/components/ui/use-toast';
+import { CheckCircle } from 'lucide-react';
+
+const AdminCelebrityUpload: React.FC = () => {
+  const [profileData, setProfileData] = useState({
+    name: '',
+    category: 'music',
+    price: '',
+    bio: '',
+    profileImage: '',
+    coverImage: '',
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const { toast } = useToast();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setProfileData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (value: string) => {
+    setProfileData((prev) => ({ ...prev, category: value }));
+  };
+
+  const handleImageChange = (type: 'profileImage' | 'coverImage', value: string) => {
+    setProfileData((prev) => ({ ...prev, [type]: value }));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitting(true);
+
+    // Validation
+    if (!profileData.name || !profileData.price || !profileData.bio || !profileData.profileImage) {
+      toast({
+        title: "Missing Information",
+        description: "Please fill in all required fields.",
+        variant: "destructive"
+      });
+      setSubmitting(false);
+      return;
+    }
+
+    // Simulate API call to create celebrity profile
+    setTimeout(() => {
+      setSubmitting(false);
+      setSuccess(true);
+      toast({
+        title: "Celebrity Profile Created",
+        description: `Successfully created profile for ${profileData.name}.`,
+      });
+
+      // Reset form after showing success
+      setTimeout(() => {
+        setSuccess(false);
+        setProfileData({
+          name: '',
+          category: 'music',
+          price: '',
+          bio: '',
+          profileImage: '',
+          coverImage: '',
+        });
+      }, 2000);
+    }, 1500);
+  };
+
+  return (
+    <Card className="w-full">
+      <CardHeader>
+        <CardTitle>Add New Celebrity</CardTitle>
+        <CardDescription>
+          Create a new celebrity profile for clients to book.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {success ? (
+          <div className="flex flex-col items-center justify-center py-8 text-center">
+            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mb-4">
+              <CheckCircle className="h-8 w-8 text-green-600" />
+            </div>
+            <h3 className="text-xl font-bold mb-2">Profile Created!</h3>
+            <p className="text-muted-foreground">
+              The celebrity profile has been successfully created and is now available for booking.
+            </p>
+          </div>
+        ) : (
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="name">Celebrity Name*</Label>
+                  <Input 
+                    id="name" 
+                    name="name"
+                    value={profileData.name} 
+                    onChange={handleChange} 
+                    placeholder="Full name"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="category">Category*</Label>
+                  <Select 
+                    value={profileData.category} 
+                    onValueChange={handleSelectChange}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="music">Music</SelectItem>
+                      <SelectItem value="acting">Acting</SelectItem>
+                      <SelectItem value="sports">Sports</SelectItem>
+                      <SelectItem value="comedy">Comedy</SelectItem>
+                      <SelectItem value="influencer">Influencer</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="price">Booking Price (USD)*</Label>
+                <Input 
+                  id="price" 
+                  name="price"
+                  type="number" 
+                  value={profileData.price} 
+                  onChange={handleChange} 
+                  placeholder="0.00"
+                  min="0"
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="bio">Biography*</Label>
+                <Textarea 
+                  id="bio" 
+                  name="bio"
+                  rows={5} 
+                  value={profileData.bio} 
+                  onChange={handleChange} 
+                  placeholder="Write a detailed bio..."
+                  required
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Profile Image*</Label>
+                <ImageUpload 
+                  value={profileData.profileImage} 
+                  onChange={(value) => handleImageChange('profileImage', value)} 
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>Cover Image</Label>
+                <ImageUpload 
+                  aspectRatio={16/9}
+                  value={profileData.coverImage} 
+                  onChange={(value) => handleImageChange('coverImage', value)} 
+                />
+              </div>
+            </div>
+          </form>
+        )}
+      </CardContent>
+      {!success && (
+        <CardFooter className="flex justify-end">
+          <Button 
+            type="submit" 
+            onClick={handleSubmit}
+            disabled={submitting}
+          >
+            {submitting ? 'Creating...' : 'Create Celebrity Profile'}
+          </Button>
+        </CardFooter>
+      )}
+    </Card>
+  );
+};
+
+export default AdminCelebrityUpload;
