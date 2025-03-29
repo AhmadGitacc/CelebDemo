@@ -243,7 +243,7 @@ const AdminDashboard: React.FC = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$0.00</div>
+              <div className="text-2xl font-bold">$11,307.97</div>
             </CardContent>
           </Card>
           <Card className="overflow-hidden">
@@ -307,7 +307,7 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$0.00</div>
+                <div className="text-2xl font-bold">$45,231.89</div>
                 <p className="text-xs text-muted-foreground">
                   +20.1% from last month
                 </p>
@@ -320,7 +320,7 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$0.00</div>
+                <div className="text-2xl font-bold">$33,923.92</div>
                 <p className="text-xs text-muted-foreground">
                   75% of total revenue
                 </p>
