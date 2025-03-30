@@ -1,11 +1,12 @@
 
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import GlassCard from '@/components/ui-custom/GlassCard';
 import PageTransition from '@/components/ui-custom/PageTransition';
 import { useToast } from '@/components/ui/use-toast';
-import { CheckCircle, Zap, Award, Download, Handshake, PersonStanding, BookKeyIcon } from 'lucide-react';
+import { gsap } from "gsap";
+import * as lucideReact from 'lucide-react';
 
 const Index: React.FC = () => {
   const { toast } = useToast();
@@ -16,6 +17,35 @@ const Index: React.FC = () => {
       description: "We'll notify you when new celebrities join our platform.",
     });
   };
+
+  useEffect(() => {
+    gsap.to(".floating-image", {
+      y: "-30px",
+      repeat: -1,
+      yoyo: true,
+      duration: 2,
+      ease: "power1.inOut",
+    });
+
+    gsap.to(".floating-image2", {
+      delay: 0.4,
+      y: "-30px",
+      repeat: -1,
+      yoyo: true,
+      duration: 2,
+      ease: "power1.inOut",
+    });
+
+    gsap.from(".slide-down", {
+      y: -100,
+      opacity: 0,
+      duration: 1,
+      ease: "power2.out",
+      stagger: 0.2,
+    });
+    
+  }, []);
+
 
   return (
     <PageTransition>
@@ -28,13 +58,13 @@ const Index: React.FC = () => {
         <div className="container relative mx-auto pt-36 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
             <div className="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
-              <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-purple-600 dark:text-purple-600 bg-clip-text text-transparent">
+              <h1 className="slide-down text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-800 to-purple-600 dark:text-purple-600 bg-clip-text text-transparent">
                 Connect With Your Favorite Celebrities
               </h1>
-              <p className="text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl lg:max-w-none">
+              <p className="slide-down text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl lg:max-w-none">
                 Book personalized experiences, video messages, and live events with top celebrities and influencers from around the world.
               </p>
-              <div className="flex flex-wrap gap-4 justify-center lg:justify-start">
+              <div className="slide-down flex flex-wrap gap-4 justify-center lg:justify-start">
                 <Button asChild size="lg" className="rounded-full">
                   <Link to="/search">Browse Celebrities</Link>
                 </Button>
@@ -46,7 +76,8 @@ const Index: React.FC = () => {
 
             <div className="w-full lg:w-1/2 relative">
               <div className="grid grid-cols-2 gap-4">
-                <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300">
+                <div
+                  className="floating-image relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300">
                   <img
                     src="https://th.bing.com/th/id/OIP.cdAXQ096v0wkMms9pud0lwHaFX?rs=1&pid=ImgDetMain"
                     alt="Davido"
@@ -57,7 +88,8 @@ const Index: React.FC = () => {
                     <p className="text-white/90 text-sm">Music</p>
                   </div>
                 </div>
-                <div className="relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300 mt-8">
+                <div
+                  className="floating-image2 relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300 mt-8">
                   <img
                     src="https://th.bing.com/th/id/OIP.YL3BU2evlZnKqj_uuvqf8AHaHQ?rs=1&pid=ImgDetMain"
                     alt="Burna Boy"
@@ -131,7 +163,7 @@ const Index: React.FC = () => {
           <div className="grid md:grid-cols-3 gap-8">
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <CheckCircle className="w-10 h-10" />
+                <lucideReact.CheckCircle className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Verified Celebrities</h3>
               <p className="text-gray-600">
@@ -141,7 +173,7 @@ const Index: React.FC = () => {
 
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <Award className="w-10 h-10" />
+                <lucideReact.Award className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Exclusive Access</h3>
               <p className="text-gray-600">
@@ -151,7 +183,7 @@ const Index: React.FC = () => {
 
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <BookKeyIcon className="w-10 h-10" />
+                <lucideReact.BookKeyIcon className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Seamless Booking</h3>
               <p className="text-gray-600">
@@ -161,7 +193,7 @@ const Index: React.FC = () => {
 
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <Zap className="w-10 h-10" />
+                <lucideReact.Zap className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Quick Customer Response</h3>
               <p className="text-gray-600">
@@ -171,7 +203,7 @@ const Index: React.FC = () => {
 
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <Download className="w-10 h-10" />
+                <lucideReact.Download className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Instant Booking Confirmations</h3>
               <p className="text-gray-600">
@@ -181,7 +213,7 @@ const Index: React.FC = () => {
 
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <PersonStanding className="w-10 h-10" />
+                <lucideReact.PersonStanding className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Personalized Service</h3>
               <p className="text-gray-600">
@@ -191,7 +223,7 @@ const Index: React.FC = () => {
 
             <div className="p-6">
               <div className="w-12 h-12 text-accent mb-4 flex items-center justify-center">
-                <Handshake className="w-10 h-10" />
+                <lucideReact.Handshake className="w-10 h-10" />
               </div>
               <h3 className="text-xl font-semibold mb-3">Trusted by Clients</h3>
               <p className="text-gray-600">
