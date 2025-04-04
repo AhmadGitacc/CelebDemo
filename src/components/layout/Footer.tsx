@@ -21,7 +21,7 @@ const Footer: React.FC = () => {
             <Link to="/" className="inline-block mb-4">
               <div className="w-36 h-28 overflow-hidden">
                 <img
-                  src="../../public/assets/WhiteLogo.svg"
+                  src="/assets/WhiteLogo.svg"
                   alt="Burna Boy"
                   className="w-full h-full object-cover object-center"
                 />

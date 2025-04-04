@@ -51,7 +51,7 @@ const CelebrityProfile: React.FC = () => {
     name: 'Wizkid',
     category: 'Musician',
     subcategory: 'Singer-Songwriter',
-    image: '../../public/assets/wizkid.jpg',
+    image: '/assets/wizkid.jpg',
     rating: 4.8,
     reviewCount: 18,
     location: 'Lagos, NG',

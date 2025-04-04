@@ -60,7 +60,7 @@ const Navbar: React.FC = () => {
         <Link to="/" className="flex items-center">
           <div className="w-28 h-20 overflow-hidden">
             <img
-              src="../../public/assets/BlackLogo.svg"
+              src="/assets/BlackLogo.svg"
               alt="Burna Boy"
               className="w-full h-full object-cover object-center  filter dark:invert"
             />
