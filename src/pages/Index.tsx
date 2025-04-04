@@ -50,15 +50,11 @@ const Index: React.FC = () => {
   return (
     <PageTransition>
       {/* Hero Section with Davido and Burna Boy */}
-      <div className="relative pb-10">
-        {/* <div className="absolute inset-0 bg-white overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-white via-white to-purple-100/50 backdrop-blur-sm"></div>
-        </div> */}
-
-        <div className="container relative mx-auto pt-36 px-4 sm:px-6 lg:px-8">
+      <div className="relative pb-10 pt-0">
+        <div className="container relative mx-auto pt-5 md:pt-36 px-4 sm:px-6 lg:px-8">
           <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
             <div className="w-full lg:w-1/2 space-y-6 text-center lg:text-left">
-              <h1 className="slide-down text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-600 to-gray-500 dark:text-white bg-clip-text text-transparent">
+              <h1 className="slide-down text-4xl md:text-5xl lg:text-6xl  font-bold tracking-tight bg-gradient-to-r from-gray-900 via-gray-600 to-gray-500 dark:text-white bg-clip-text text-transparent">
                 Connect With Your Favorite Celebrities
               </h1>
               <p className="slide-down text-lg md:text-xl text-gray-600 dark:text-gray-300 max-w-2xl lg:max-w-none">
