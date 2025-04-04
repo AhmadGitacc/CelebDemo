@@ -48,16 +48,16 @@ const CelebrityProfile: React.FC = () => {
   // This is mock data - in a real app this would come from an API
   const celebrity = {
     id: id || '1',
-    name: 'Jason Ludwig',
+    name: 'Wizkid',
     category: 'Musician',
     subcategory: 'Singer-Songwriter',
-    image: 'https://images.unsplash.com/photo-1519345182560-3f2917c472ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1974&q=80',
+    image: '../../public/assets/wizkid.jpg',
     rating: 4.8,
     reviewCount: 18,
-    location: 'Los Angeles, CA',
-    bio: 'Award-winning musician with over 10 years of experience performing at high-profile events, weddings, and corporate functions. Known for engaging performances and ability to adapt to different audience preferences.',
+    location: 'Lagos, NG',
+    bio: "Wizkid is the global superstar who brought Afrobeats to the world stage! From his early days in Lagos to dominating charts worldwide, Wizkid’s journey has been nothing short of legendary. His 2011 hit “Holla at Your Boy” introduced us to his signature style, and collaborations with global artists like Drake on “One Dance” skyrocketed him to international fame. Known for his smooth fusion of Afrobeats, reggae, and R&B, Wizkid’s music is a celebration of African culture. His album Made in Lagos gave us timeless tracks, and he's still leading the wave",
     isVerified: true,
-    isInstantBooking: true,
+    isInstantBooking: false,
     isAvailableToday: false,
     followersCount: '450K',
     minimumPrice: 5000,
@@ -177,10 +177,10 @@ const CelebrityProfile: React.FC = () => {
       }
     ],
     socials: {
-      instagram: '@jasonludwig',
-      twitter: '@jludwigmusic',
-      website: 'www.jasonludwig.com',
-      youtube: 'JasonLudwigMusic'
+      instagram: '@Wizkid',
+      twitter: '@Wizkidmusic',
+      youtube: 'WizkidMusic',
+      website: 'Wizkid.com'
     },
     achievements: [
       'Grammy Award Nominee 2021',

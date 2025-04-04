@@ -19,9 +19,13 @@ const Footer: React.FC = () => {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10">
           <div>
             <Link to="/" className="inline-block mb-4">
-              <span className="text-2xl font-display tracking-tight font-semibold">
-                <span className="text-accent">Celeb</span>Connect
-              </span>
+              <div className="w-36 h-28 overflow-hidden">
+                <img
+                  src="../../public/assets/WhiteLogo.svg"
+                  alt="Burna Boy"
+                  className="w-full h-full object-cover object-center"
+                />
+              </div>
             </Link>
             <p className="text-primary-foreground/70 dark:text-white mb-6">
               Connecting you with world-class celebrities and influencers for your events and campaigns.
@@ -57,7 +61,7 @@ const Footer: React.FC = () => {
               </li> */}
               <li>
                 <Link to="/#how-it-works"
-                 className="text-primary-foreground/70 dark:text-white hover:text-accent transition-colors">
+                  className="text-primary-foreground/70 dark:text-white hover:text-accent transition-colors">
                   How It Works
                 </Link>
               </li>
@@ -117,7 +121,7 @@ const Footer: React.FC = () => {
 
         <div className="flex flex-col md:flex-row justify-between items-center">
           <p className="text-sm text-primary-foreground/50 dark:text-white mb-4 md:mb-0">
-            © {new Date().getFullYear()} CelebConnect. All rights reserved.
+            © {new Date().getFullYear()} yaza. All rights reserved.
           </p>
           <div className="flex space-x-6">
             <Link to="/terms-privacy" className="text-sm text-primary-foreground/50 dark:text-white hover:text-primary-foreground transition-colors">

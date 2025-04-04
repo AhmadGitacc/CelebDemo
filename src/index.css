@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -23,8 +22,8 @@
     --muted: 240 4.8% 95.9%;
     --muted-foreground: 240 3.8% 46.1%;
 
-    --accent: 270 70% 60%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 70%; /* Changed from purple to white */
+    --accent-foreground: 0 0% 0%; /* Changed from purple to black */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
@@ -37,12 +36,12 @@
 
     --sidebar-background: 240 10% 3.9%;
     --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 270 70% 60%;
+    --sidebar-primary: 0 0% 0%; /* Changed to black */
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 20%;
+    --sidebar-accent: 240 3.7% 20%; /* Changed to dark grey */
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 17%;
-    --sidebar-ring: 270 70% 60%;
+    --sidebar-ring: 0 0% 0%; /* Changed to black */
   }
 
   .dark {
@@ -55,8 +54,8 @@
     --popover: 240 10% 3.9%;
     --popover-foreground: 0 0% 98%;
 
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
+    --primary: 0 0% 98%; /* Changed to white */
+    --primary-foreground: 0 0% 0%; /* Changed to black */
 
     --secondary: 240 3.7% 15.9%;
     --secondary-foreground: 0 0% 98%;
@@ -64,8 +63,8 @@
     --muted: 240 3.7% 15.9%;
     --muted-foreground: 240 5% 64.9%;
 
-    --accent: 270 70% 60%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 0 0% 100%; /* Changed to white */
+    --accent-foreground: 0 0% 0%; /* Changed to black */
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 0 0% 98%;
@@ -160,11 +159,11 @@
 }
 
 .golden-gradient {
-  @apply bg-gradient-to-r from-purple-700 via-violet-500 to-purple-700;
+  @apply bg-gradient-to-r from-black via-gray-600 to-black; /* Changed purple gradient to black and grey */
 }
 
 .glossy-white-bg {
-  background: radial-gradient(ellipse at top right, rgba(139, 92, 246, 0.15), transparent 70%),
-              radial-gradient(ellipse at bottom left, rgba(139, 92, 246, 0.15), transparent 70%),
+  background: radial-gradient(ellipse at top right, rgba(255, 255, 255, 0.15), transparent 70%),
+              radial-gradient(ellipse at bottom left, rgba(255, 255, 255, 0.15), transparent 70%),
               white;
 }

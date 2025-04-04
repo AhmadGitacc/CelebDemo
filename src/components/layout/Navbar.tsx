@@ -53,14 +53,19 @@ const Navbar: React.FC = () => {
     <header
       className={cn(
         "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        isScrolled ? "glass-effect py-3 shadow-sm" : "bg-transparent py-5"
+        isScrolled ? "glass-effect shadow-sm" : "bg-transparent"
       )}
     >
       <div className="container mx-auto px-4 flex items-center justify-between">
         <Link to="/" className="flex items-center">
-          <span className="text-2xl font-display tracking-tight font-semibold text-primary">
-            <span className="text-accent">Celeb</span>Connect
-          </span>
+          <div className="w-28 h-20 overflow-hidden">
+            <img
+              src="../../public/assets/BlackLogo.svg"
+              alt="Burna Boy"
+              className="w-full h-full object-cover object-center  filter dark:invert"
+            />
+          </div>
+
         </Link>
 
         {/* Desktop Navigation */}
@@ -68,30 +73,27 @@ const Navbar: React.FC = () => {
           <Link
             to="/"
             className={cn(
-              "text-sm font-medium transition-colors hover:text-accent",
-              isActive("/") && "text-accent"
+              "text-sm font-medium transition-colors hover:text-gray-400",
+              isActive("/") && "text-gray-600 dark:text-gray-300"
             )}
-            onClick={closeMobileMenu}
           >
             Home
           </Link>
           <Link
             to="/search"
             className={cn(
-              "text-sm font-medium transition-colors hover:text-accent",
-              isActive("/search") && "text-accent"
+              "text-sm font-medium transition-colors hover:text-gray-400",
+              isActive("/search") && "text-gray-700 dark:text-gray-300"
             )}
-            onClick={closeMobileMenu}
           >
             Browse Celebrities
           </Link>
           <Link
             to="/dashboard"
             className={cn(
-              "text-sm font-medium transition-colors hover:text-accent",
-              isActive("/dashboard") && "text-accent"
+              "text-sm font-medium transition-colors hover:text-gray-400",
+              isActive("/dashboard") && "text-gray-700  dark:text-gray-300"
             )}
-            onClick={closeMobileMenu}
           >
             Dashboard
           </Link>
