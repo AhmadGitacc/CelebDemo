@@ -52,16 +52,19 @@ const Navbar: React.FC = () => {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
-        isScrolled ? "glass-effect shadow-sm" : "bg-transparent"
+        "top-0 left-0 right-0 z-50 transition-all duration-300",
+        isScrolled ? "glass-effect shadow-sm" : "bg-transparent",
+        "md:fixed md:top-0",
+        "relative"
       )}
     >
+
       <div className="container mx-auto px-4 flex items-center justify-between">
         <Link to="/" className="flex items-center">
           <div className="w-28 h-20 overflow-hidden">
             <img
               src="/assets/BlackLogo.svg"
-              alt="Burna Boy"
+              alt="Logo"
               className="w-full h-full object-cover object-center  filter dark:invert"
             />
           </div>

@@ -79,7 +79,7 @@ const Index: React.FC = () => {
                 <div
                   className="floating-image relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300">
                   <img
-                    src="https://th.bing.com/th/id/OIP.cdAXQ096v0wkMms9pud0lwHaFX?rs=1&pid=ImgDetMain"
+                    src="/assets/davido.jpg"
                     alt="Davido"
                     className="w-full h-full object-cover"
                   />
@@ -91,7 +91,7 @@ const Index: React.FC = () => {
                 <div
                   className="floating-image2 relative h-64 md:h-80 rounded-2xl overflow-hidden shadow-xl transform hover:scale-105 transition-transform duration-300 mt-8">
                   <img
-                    src="https://th.bing.com/th/id/OIP.YL3BU2evlZnKqj_uuvqf8AHaHQ?rs=1&pid=ImgDetMain"
+                    src="/assets/burnaboy.jpg"
                     alt="Burna Boy"
                     className="w-full h-full object-cover"
                   />
