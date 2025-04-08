@@ -5,9 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { useToast } from '@/components/ui/use-toast';
-import { useAuth, UserRole } from '@/contexts/AuthContext';
+import { useAuth } from '@/contexts/AuthContext';
 import PageTransition from '@/components/ui-custom/PageTransition';
 import { LogIn, UserPlus, Check, Loader2 } from 'lucide-react';
 import GlassCard from '@/components/ui-custom/GlassCard';
@@ -31,7 +30,6 @@ const Auth: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<UserRole>('client');
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,7 +71,7 @@ const Auth: React.FC = () => {
       return;
     }
 
-    const success = await signup(name, email, password, role);
+    const success = await signup(name, email, password);
 
     if (success) {
       navigate('/dashboard');
@@ -87,7 +85,7 @@ const Auth: React.FC = () => {
           <GlassCard className="p-8">
             <div className="text-center mb-8">
               <center className='flex justify-center'>
-                <h1 className="text-3xl font-bold mt-5">
+                <h1 className="text-2xl lg:text-3xl font-bold mt-5">
                   Welcome to
                 </h1>
                 <div className="w-28 h-20 overflow-hidden">
@@ -162,13 +160,6 @@ const Auth: React.FC = () => {
                     )}
                   </Button>
 
-                  <div className="text-center text-sm text-muted-foreground mt-4">
-                    <p>Demo accounts:</p>
-                    <p>admin@example.com (Admin)</p>
-                    <p>john@example.com (Celebrity)</p>
-                    <p>sarah@example.com (Client)</p>
-                    <p className="mt-2">Password: any text will work</p>
-                  </div>
                 </form>
               </TabsContent>
 
@@ -189,7 +180,7 @@ const Auth: React.FC = () => {
                     <Input
                       id="email"
                       type="email"
-                      placeholder="your@email.com"
+                      placeholder="youremail@email.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                     />
@@ -216,24 +207,6 @@ const Auth: React.FC = () => {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                     />
                   </div>
-
-                  {/* <div className="space-y-2">
-                    <Label>Account Type</Label>
-                    <RadioGroup 
-                      defaultValue={role} 
-                      onValueChange={(value) => setRole(value as UserRole)}
-                      className="flex flex-col space-y-1"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="client" id="client" />
-                        <Label htmlFor="client" className="cursor-pointer">Client (Book Celebrities)</Label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <RadioGroupItem value="celebrity" id="celebrity" disabled />
-                        <Label htmlFor="celebrity" className="cursor-pointer text-slate-300" aria-disabled>Celebrity (Contact Admin to join)</Label>
-                      </div>
-                    </RadioGroup>
-                  </div> */}
 
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? (

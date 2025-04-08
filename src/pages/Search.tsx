@@ -1,5 +1,12 @@
-
 import React, { useState, useEffect } from 'react';
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  DocumentData
+} from 'firebase/firestore';
+import { db } from '@/lib/firebase'; // 👈 adjust if your firebase config path is different
 import { Button } from '@/components/ui/button';
 import { Filter, ArrowUpDown, Grid3X3, List } from 'lucide-react';
 import GlassCard from '@/components/ui-custom/GlassCard';
@@ -14,134 +21,70 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 
-// Mock data for celebrities
-const mockCelebrities: Celebrity[] = [
-  {
-    id: '1',
-    name: 'Wizkid',
-    category: 'Musician',
-    subcategory: 'Singer',
-    image: '/assets/wizkid.jpg',
-    rating: 4.7,
-    reviewCount: 120,
-    minPrice: 15000,
-    location: 'Lagos, NG',
-    isVerified: true,
-    isInstantBooking: false,
-    isAvailableToday: false,
-    tags: ['Afrobeats', 'Hiphop']
-  },
-  {
-    id: '2',
-    name: 'Davido',
-    category: 'Musician',
-    subcategory: 'Singer',
-    image: '/assets/davido.jpg',
-    rating: 4.9,
-    reviewCount: 120,
-    minPrice: 10000,
-    location: 'Lagos, NG',
-    isVerified: true,
-    isInstantBooking: false,
-    isAvailableToday: true,
-    tags: ['Afrobeats']
-  },
-  {
-    id: '3',
-    name: 'Burnaboy',
-    category: 'Musician',
-    subcategory: 'Rapper',
-    image: '/assets/burnaboy.jpg',
-    rating: 4.7,
-    reviewCount: 120,
-    minPrice: 25000,
-    location: 'Lagos, NG',
-    isVerified: true,
-    isInstantBooking: false,
-    isAvailableToday: true,
-    tags: ['Afrobeats', 'Amapiano, Hiphop']
-  },
-  {
-    id: '4',
-    name: 'Olamide',
-    category: 'Musician',
-    subcategory: 'Rapper',
-    image: '/assets/olamide.jpg',
-    rating: 4.3,
-    reviewCount: 120,
-    minPrice: 15000,
-    location: 'Lagos, NG',
-    isVerified: true,
-    isInstantBooking: false,
-    isAvailableToday: false,
-    tags: ['Amapiano', 'Afrobeats']
-  },
-  {
-    id: '5',
-    name: 'Don Jazzy',
-    category: 'Producer',
-    subcategory: 'Musician',
-    image: '/assets/donjazzy.jpg',
-    rating: 4.3,
-    reviewCount: 120,
-    minPrice: 20000,
-    location: 'Lagos, NG',
-    isVerified: true,
-    isInstantBooking: true,
-    isAvailableToday: false,
-    tags: ['Amapiano', 'Afrobeats', 'Hiphop']
-  },
-  
-];
-
 const Search: React.FC = () => {
-  const [celebrities, setCelebrities] = useState<Celebrity[]>(mockCelebrities);
-  const [filteredCelebrities, setFilteredCelebrities] = useState<Celebrity[]>(mockCelebrities);
-  const [loading, setLoading] = useState(false);
+  const [celebrities, setCelebrities] = useState<Celebrity[]>([]);
+  const [filteredCelebrities, setFilteredCelebrities] = useState<Celebrity[]>([]);
+  const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [sortOption, setSortOption] = useState('relevance');
 
+  // 🔥 Fetch real data from Firestore
+  const fetchCelebrities = async () => {
+    try {
+      setLoading(true);
+      const snapshot = await getDocs(collection(db, 'celebrities'));
+      const data: Celebrity[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      })) as Celebrity[];
+      setCelebrities(data);
+      setFilteredCelebrities(data);
+      setLoading(false);
+    } catch (err) {
+      console.error('Failed to fetch celebrities:', err);
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchCelebrities();
+  }, []);
+
   const handleSearch = (filters: any) => {
     setLoading(true);
-    
-    // Simulate API request delay
     setTimeout(() => {
       let results = [...celebrities];
-      
-      // Filter by category - now handling 'all' value properly
+
       if (filters.category && filters.category !== 'all') {
-        results = results.filter(celeb => 
+        results = results.filter(celeb =>
           celeb.category.toLowerCase() === filters.category.toLowerCase()
         );
       }
-      
-      // Filter by price range
+
       if (filters.priceMin || filters.priceMax) {
-        results = results.filter(celeb => 
-          celeb.minPrice >= filters.priceMin && 
+        results = results.filter(celeb =>
+          celeb.minPrice >= filters.priceMin &&
           (filters.priceMax ? celeb.minPrice <= filters.priceMax : true)
         );
       }
-      
-      // Filter by search term
+
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase();
-        results = results.filter(celeb => 
-          celeb.name.toLowerCase().includes(searchLower) || 
+        results = results.filter(celeb =>
+          celeb.name.toLowerCase().includes(searchLower) ||
           celeb.category.toLowerCase().includes(searchLower) ||
           (celeb.subcategory && celeb.subcategory.toLowerCase().includes(searchLower)) ||
           (celeb.tags && celeb.tags.some(tag => tag.toLowerCase().includes(searchLower)))
         );
       }
-      
-      // Filter by location
+
       if (filters.location) {
         const locationLower = filters.location.toLowerCase();
-        results = results.filter(celeb => 
+        results = results.filter(celeb =>
           celeb.location.toLowerCase().includes(locationLower)
         );
       }
-      
+
       setFilteredCelebrities(results);
       setLoading(false);
     }, 500);
@@ -150,7 +93,7 @@ const Search: React.FC = () => {
   const handleSort = (value: string) => {
     setSortOption(value);
     let sorted = [...filteredCelebrities];
-    
+
     switch (value) {
       case 'price-low':
         sorted.sort((a, b) => a.minPrice - b.minPrice);
@@ -165,10 +108,9 @@ const Search: React.FC = () => {
         sorted.sort((a, b) => b.reviewCount - a.reviewCount);
         break;
       default:
-        // Relevance (no sorting)
         break;
     }
-    
+
     setFilteredCelebrities(sorted);
   };
 
@@ -182,9 +124,9 @@ const Search: React.FC = () => {
               Discover and book top celebrities for your events, campaigns, and special occasions
             </p>
           </div>
-          
+
           <SearchFilters onSearch={handleSearch} />
-          
+
           <div className="flex flex-col sm:flex-row justify-between gap-4 items-center">
             <p className="text-muted-foreground text-sm">
               Showing <span className="font-medium text-foreground">{filteredCelebrities.length}</span> celebrities
@@ -203,19 +145,19 @@ const Search: React.FC = () => {
                   <SelectItem value="popularity">Most Popular</SelectItem>
                 </SelectContent>
               </Select>
-              
+
               <div className="flex items-center border rounded-md overflow-hidden">
-                <Button 
-                  variant={viewMode === 'grid' ? 'default' : 'ghost'} 
-                  size="sm" 
+                <Button
+                  variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                  size="sm"
                   className="rounded-none"
                   onClick={() => setViewMode('grid')}
                 >
                   <Grid3X3 className="h-4 w-4" />
                 </Button>
-                <Button 
-                  variant={viewMode === 'list' ? 'default' : 'ghost'} 
-                  size="sm" 
+                <Button
+                  variant={viewMode === 'list' ? 'default' : 'ghost'}
+                  size="sm"
                   className="rounded-none"
                   onClick={() => setViewMode('list')}
                 >
@@ -224,7 +166,7 @@ const Search: React.FC = () => {
               </div>
             </div>
           </div>
-          
+
           {loading ? (
             <div className="min-h-[400px] flex items-center justify-center">
               <div className="flex flex-col items-center">
@@ -248,14 +190,14 @@ const Search: React.FC = () => {
             </GlassCard>
           ) : (
             <div className={
-              viewMode === 'grid' 
+              viewMode === 'grid'
                 ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6'
                 : 'space-y-6'
             }>
               {filteredCelebrities.map(celebrity => (
-                <CelebrityCard 
-                  key={celebrity.id} 
-                  celebrity={celebrity} 
+                <CelebrityCard
+                  key={celebrity.id}
+                  celebrity={celebrity}
                   className={viewMode === 'list' ? 'flex flex-col md:flex-row' : ''}
                 />
               ))}

@@ -8,12 +8,16 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import ImageUpload from '@/components/ui-custom/ImageUpload';
 import { useToast } from '@/components/ui/use-toast';
 import { CheckCircle } from 'lucide-react';
+import { auth, db } from '@/lib/firebase'; 
+import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { doc, setDoc } from 'firebase/firestore';
 
 const AdminCelebrityUpload: React.FC = () => {
   const [profileData, setProfileData] = useState({
     name: '',
+    email: '',
+    password: '',
     category: 'music',
-    price: '',
     bio: '',
     profileImage: '',
     coverImage: '',
@@ -35,43 +39,79 @@ const AdminCelebrityUpload: React.FC = () => {
     setProfileData((prev) => ({ ...prev, [type]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
     // Validation
-    if (!profileData.name || !profileData.price || !profileData.bio || !profileData.profileImage) {
+    if (!profileData.name || !profileData.email || !profileData.password || !profileData.bio) {
       toast({
-        title: "Missing Information",
-        description: "Please fill in all required fields.",
-        variant: "destructive"
+        title: 'Missing Information',
+        description: 'Please fill in all required fields.',
+        variant: 'destructive',
       });
       setSubmitting(false);
       return;
     }
 
-    // Simulate API call to create celebrity profile
-    setTimeout(() => {
+    try {
+      // 1. Create user in Firebase Authentication (using email and password)
+      const userCredential = await createUserWithEmailAndPassword(auth, profileData.email, profileData.password);
+
+      // 2. Set the profile information (name, etc.)
+      await updateProfile(userCredential.user, {
+        displayName: profileData.name,
+      });
+
+      // Step 1: Create the user document in the 'users' collection with minimal data
+      const userDocRef = await setDoc(doc(db, 'users', userCredential.user.uid), {
+        name: profileData.name,
+        email: profileData.email, 
+        role: 'celebrity', 
+        avatar: profileData.profileImage,  
+      });
+
+      // 3. Create a Firestore document for the celebrity profile
+      const newCelebrity = {
+        name: profileData.name,
+        category: profileData.category,
+        bio: profileData.bio,
+        profileImage: profileData.profileImage, // You can add default until image upload is available
+        coverImage: profileData.coverImage, // You can add default until image upload is available
+        userId: userCredential.user.uid, 
+      };
+
+      await setDoc(doc(db, 'celebrities', userCredential.user.uid), newCelebrity);  // Add the document to Firestore
+
       setSubmitting(false);
       setSuccess(true);
       toast({
-        title: "Celebrity Profile Created",
+        title: 'Celebrity Profile Created',
         description: `Successfully created profile for ${profileData.name}.`,
       });
 
-      // Reset form after showing success
+      // Reset form after success
       setTimeout(() => {
         setSuccess(false);
         setProfileData({
           name: '',
           category: 'music',
-          price: '',
+          email: '',
+          password: '',
           bio: '',
           profileImage: '',
           coverImage: '',
         });
       }, 2000);
-    }, 1500);
+    } catch (error) {
+      console.error('Error creating celebrity account:', error);
+      setSubmitting(false);
+      toast({
+        title: 'Error',
+        description: 'There was an error creating the celebrity account. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
 
   return (
@@ -99,20 +139,46 @@ const AdminCelebrityUpload: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="name">Celebrity Name*</Label>
-                  <Input 
-                    id="name" 
+                  <Input
+                    id="name"
                     name="name"
-                    value={profileData.name} 
-                    onChange={handleChange} 
+                    value={profileData.name}
+                    onChange={handleChange}
                     placeholder="Full name"
                     required
                   />
                 </div>
-                
+
+                <div className="space-y-2">
+                  <Label htmlFor="name">Celebrity Email*</Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    value={profileData.email}
+                    onChange={handleChange}
+                    type="email"
+                    placeholder="example@gmail.com"
+                    required
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="name">Celebrity Password*</Label>
+                  <Input
+                    id="password"
+                    name="password"
+                    value={profileData.password}
+                    onChange={handleChange}
+                    placeholder="********"
+                    required
+                    type="password"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="category">Category*</Label>
-                  <Select 
-                    value={profileData.category} 
+                  <Select
+                    value={profileData.category}
                     onValueChange={handleSelectChange}
                   >
                     <SelectTrigger>
@@ -128,48 +194,34 @@ const AdminCelebrityUpload: React.FC = () => {
                   </Select>
                 </div>
               </div>
-              
-              <div className="space-y-2">
-                <Label htmlFor="price">Booking Price (USD)*</Label>
-                <Input 
-                  id="price" 
-                  name="price"
-                  type="number" 
-                  value={profileData.price} 
-                  onChange={handleChange} 
-                  placeholder="0.00"
-                  min="0"
-                  required
-                />
-              </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="bio">Biography*</Label>
-                <Textarea 
-                  id="bio" 
+                <Textarea
+                  id="bio"
                   name="bio"
-                  rows={5} 
-                  value={profileData.bio} 
-                  onChange={handleChange} 
+                  rows={5}
+                  value={profileData.bio}
+                  onChange={handleChange}
                   placeholder="Write a detailed bio..."
                   required
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Profile Image*</Label>
-                <ImageUpload 
-                  value={profileData.profileImage} 
-                  onChange={(value) => handleImageChange('profileImage', value)} 
+                <ImageUpload
+                  value={profileData.profileImage}
+                  onChange={(value) => handleImageChange('profileImage', value)}
                 />
               </div>
-              
+
               <div className="space-y-2">
                 <Label>Cover Image</Label>
-                <ImageUpload 
-                  aspectRatio={16/9}
-                  value={profileData.coverImage} 
-                  onChange={(value) => handleImageChange('coverImage', value)} 
+                <ImageUpload
+                  aspectRatio={16 / 9}
+                  value={profileData.coverImage}
+                  onChange={(value) => handleImageChange('coverImage', value)}
                 />
               </div>
             </div>
@@ -178,8 +230,8 @@ const AdminCelebrityUpload: React.FC = () => {
       </CardContent>
       {!success && (
         <CardFooter className="flex justify-end">
-          <Button 
-            type="submit" 
+          <Button
+            type="submit"
             onClick={handleSubmit}
             disabled={submitting}
           >

@@ -1,6 +1,4 @@
-import { CheckCircle, Award, Users } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import GlassCard from "@/components/ui-custom/GlassCard";
 import PageTransition from "@/components/ui-custom/PageTransition";
 
 export default function AboutPage() {

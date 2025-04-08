@@ -13,7 +13,6 @@ import DigitalWallet from '@/components/payment/Wallet';
 const Dashboard: React.FC = () => {
   const { user } = useAuth();
   const [activeView, setActiveView] = useState<'dashboard' | 'wallet'>('dashboard');
-  const navigate = useNavigate();
 
   const renderDashboard = () => {
     switch (user?.role) {
@@ -54,21 +53,15 @@ const Dashboard: React.FC = () => {
                   <User className="h-4 w-4" />
                   <span className="hidden sm:inline">Dashboard</span>
                 </TabsTrigger>
+                {user?.role !== 'client' && (
                 <TabsTrigger value="wallet" className="flex items-center gap-2">
                   <Wallet className="h-4 w-4" />
                   <span className="hidden sm:inline">My Wallet</span>
                 </TabsTrigger>
+                )}
               </TabsList>
             </Tabs>
 
-            {user?.role !== 'admin' && user?.role !== 'celebrity' && (
-              <Button
-                variant="outline"
-                onClick={() => navigate('/search')}
-              >
-                Browse Celebrities
-              </Button>
-            )}
           </div>
         </div>
 

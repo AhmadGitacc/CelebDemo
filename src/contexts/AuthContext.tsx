@@ -1,184 +1,172 @@
-
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import {
+  createUserWithEmailAndPassword,
+  signInWithEmailAndPassword,
+  signOut,
+  updateProfile,
+} from 'firebase/auth';
+import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { auth, db } from '../lib/firebase.js';
 import { toast } from '@/components/ui/use-toast';
 
-export type UserRole = 'client' | 'celebrity' | 'admin';
+type UserRole = 'client' | 'celebrity' | 'admin';
 
-export interface User {
+interface User {
   id: string;
   name: string;
   email: string;
   role: UserRole;
-  avatar?: string;
-  verified?: boolean;
+  avatar: string; // Added avatar field
 }
 
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  signup: (name: string, email: string, password: string) => Promise<boolean>;
   login: (email: string, password: string) => Promise<boolean>;
-  signup: (name: string, email: string, password: string, role: UserRole) => Promise<boolean>;
   logout: () => void;
-  updateProfile: (userData: Partial<User>) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user database for demo
-const MOCK_USERS: User[] = [
-  {
-    id: '1',
-    name: 'Admin User',
-    email: 'admin@example.com',
-    role: 'admin',
-    verified: true
-  },
-  {
-    id: '2', 
-    name: 'John Legend',
-    email: 'john@example.com',
-    role: 'celebrity',
-    verified: true,
-    avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=774&q=80'
-  },
-  {
-    id: '3',
-    name: 'Sarah Johnson',
-    email: 'sarah@example.com',
-    role: 'client',
-    verified: true
-  }
-];
+// Function to generate avatar using initials
+const generateAvatar = (name: string, email: string) => {
+  if (name) {
+    const initials = name
+      .split(' ')
+      .map((n) => n[0])
+      .join('')
+      .toUpperCase();
 
-export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
+    return `https://ui-avatars.com/api/?name=${initials}&background=random`;
+  }
+
+  // Fallback using email initials if no name is available
+  return `https://ui-avatars.com/api/?name=${email[0].toUpperCase()}&background=random`;
+};
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
+  children,
+}) => {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+
   useEffect(() => {
-    // Check for saved user in localStorage
-    const savedUser = localStorage.getItem('user');
-    if (savedUser) {
-      setUser(JSON.parse(savedUser));
-    }
-    setIsLoading(false);
+    const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
+      if (firebaseUser) {
+        const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+        if (userDoc.exists()) {
+          setUser(userDoc.data() as User);
+        }
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
+  const signup = async (
+    name: string,
+    email: string,
+    password: string
+  ): Promise<boolean> => {
     setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    const foundUser = MOCK_USERS.find(u => u.email === email);
-    
-    if (foundUser) {
-      // In a real app, we would check the password here
-      setUser(foundUser);
-      localStorage.setItem('user', JSON.stringify(foundUser));
+    try {
+      const userCredential = await createUserWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      await updateProfile(userCredential.user, { displayName: name });
+
+      const newUser: User = {
+        id: userCredential.user.uid,
+        name,
+        email,
+        role: 'client', // always register as client
+        avatar: generateAvatar(name, email), // Added avatar
+      };
+
+      await setDoc(doc(db, 'users', newUser.id), newUser);
+
+      setUser(newUser);
       toast({
-        title: "Login successful",
-        description: `Welcome back, ${foundUser.name}!`,
+        title: 'Signup successful',
+        description: `Welcome, ${name}`,
       });
-      setIsLoading(false);
+
       return true;
-    }
-    
-    toast({
-      title: "Login failed",
-      description: "Invalid email or password",
-      variant: "destructive"
-    });
-    setIsLoading(false);
-    return false;
-  };
-  
-  const signup = async (name: string, email: string, password: string, role: UserRole): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Check if user already exists
-    const userExists = MOCK_USERS.some(u => u.email === email);
-    
-    if (userExists) {
+    } catch (error: any) {
       toast({
-        title: "Signup failed",
-        description: "Email already in use",
-        variant: "destructive"
+        title: 'Signup failed',
+        description: error.message,
+        variant: 'destructive',
       });
-      setIsLoading(false);
       return false;
-    }
-    
-    // Create new user
-    const newUser: User = {
-      id: Math.random().toString(36).substring(2, 9),
-      name,
-      email,
-      role,
-      verified: false
-    };
-    
-    // In a real app, we would save this to the database
-    MOCK_USERS.push(newUser);
-    
-    setUser(newUser);
-    localStorage.setItem('user', JSON.stringify(newUser));
-    
-    toast({
-      title: "Signup successful",
-      description: `Welcome, ${name}!`,
-    });
-    
-    setIsLoading(false);
-    return true;
-  };
-  
-  const logout = () => {
-    setUser(null);
-    localStorage.removeItem('user');
-    toast({
-      title: "Logged out",
-      description: "You have been successfully logged out",
-    });
-  };
-  
-  const updateProfile = async (userData: Partial<User>): Promise<boolean> => {
-    setIsLoading(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    if (user) {
-      const updatedUser = { ...user, ...userData };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-      
-      toast({
-        title: "Profile updated",
-        description: "Your profile has been updated successfully",
-      });
-      
+    } finally {
       setIsLoading(false);
-      return true;
     }
-    
-    setIsLoading(false);
-    return false;
+  };
+
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<boolean> => {
+    setIsLoading(true);
+    try {
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+
+      const uid = userCredential.user.uid;
+      const userDoc = await getDoc(doc(db, 'users', uid));
+
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as User;
+        setUser(userData);
+        toast({
+          title: 'Login successful',
+          description: `Welcome back, ${userData.name}`,
+        });
+        return true;
+      } else {
+        throw new Error('User profile not found');
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Login failed',
+        description: error.message,
+        variant: 'destructive',
+      });
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const logout = () => {
+    signOut(auth);
+    setUser(null);
+    toast({ title: 'Logged out' });
   };
 
   return (
-    <AuthContext.Provider value={{ 
-      user, 
-      isLoading, 
-      isAuthenticated: !!user,
-      login, 
-      signup, 
-      logout,
-      updateProfile
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        isLoading,
+        isAuthenticated: !!user,
+        signup,
+        login,
+        logout,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -186,8 +174,6 @@ export const AuthProvider: React.FC<{children: ReactNode}> = ({ children }) => {
 
 export const useAuth = () => {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
+  if (!context) throw new Error('useAuth must be used within AuthProvider');
   return context;
 };
