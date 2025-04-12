@@ -18,7 +18,7 @@ const CancelBookingButton: React.FC<CancelBookingButtonProps> = ({ bookingId, te
   // Function to handle cancel booking action
   const handleCancelBooking = async () => {
     // Show confirmation before cancel
-    const confirmed = window.confirm("Are you sure you want to cancel this booking?");
+    const confirmed = window.confirm("You are about to cancel this booking, click 'OK' to continue");
 
     if (confirmed) {
       try {

@@ -4,7 +4,7 @@ import {
   signOut,
   updateProfile,
 } from 'firebase/auth';
-import { collection, doc, setDoc, getDoc } from 'firebase/firestore';
+import { collection, doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { auth, db } from '../lib/firebase.js';
 import { toast } from '@/components/ui/use-toast';
@@ -17,6 +17,8 @@ interface User {
   email: string;
   role: UserRole;
   avatar: string; // Added avatar field
+  createdAt: string; // Added createdAt field
+  status: string; // Added status field
 }
 
 interface AuthContextType {
@@ -57,7 +59,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       if (firebaseUser) {
         const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
         if (userDoc.exists()) {
-          setUser(userDoc.data() as User);
+          const userData = userDoc.data() as User;
+
+          // Check if the user's status is 'deleted'
+          if (userData.status === 'deleted') {
+            signOut(auth); // Log the user out if their account is marked as deleted
+            toast({
+              title: 'Account deleted',
+              description: 'Your account has been deleted. Please contact support if you believe this is a mistake.',
+              variant: 'destructive',
+            });
+            setUser(null);
+          } else {
+            setUser(userData);
+          }
         }
       } else {
         setUser(null);
@@ -88,7 +103,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         name,
         email,
         role: 'client', // always register as client
-        avatar: generateAvatar(name, email), // Added avatar
+        avatar: generateAvatar(name, email),
+        createdAt: new Date().toISOString(),
+        status: 'active', // default status is active
       };
 
       await setDoc(doc(db, 'users', newUser.id), newUser);
@@ -129,6 +146,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
 
       if (userDoc.exists()) {
         const userData = userDoc.data() as User;
+
+        // Check if the user's status is 'deleted'
+        if (userData.status === 'deleted') {
+          signOut(auth); // Log the user out if their account is marked as deleted
+          toast({
+            title: 'Account deleted',
+            description: 'Your account has been deleted. Please contact support if you believe this is a mistake.',
+            variant: 'destructive',
+          });
+          setUser(null);
+          return false; // Don't proceed with login
+        }
+
         setUser(userData);
         toast({
           title: 'Login successful',

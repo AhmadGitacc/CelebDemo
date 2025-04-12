@@ -105,6 +105,7 @@ const CelebrityServices = ({ celebrityId }: { celebrityId: string }) => {
                             <div>
                                 <h4 className="font-medium">{pkg.title}</h4>
                                 <p className="text-muted-foreground my-1 text-sm">{pkg.description}</p>
+                                <p className="text-muted-foreground my-1 text-sm">{pkg.features}</p>
                                 <p className="text-sm text-muted-foreground">
                                     ${pkg.price.toLocaleString()} – {pkg.duration}
                                 </p>

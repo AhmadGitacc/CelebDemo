@@ -6,7 +6,7 @@ import {
   where,
   DocumentData
 } from 'firebase/firestore';
-import { db } from '@/lib/firebase'; // 👈 adjust if your firebase config path is different
+import { db } from '@/lib/firebase';
 import { Button } from '@/components/ui/button';
 import { Filter, ArrowUpDown, Grid3X3, List } from 'lucide-react';
 import GlassCard from '@/components/ui-custom/GlassCard';
@@ -71,7 +71,7 @@ const Search: React.FC = () => {
       if (filters.searchTerm) {
         const searchLower = filters.searchTerm.toLowerCase();
         results = results.filter(celeb =>
-          celeb.name.toLowerCase().includes(searchLower) ||
+          celeb.stageName.toLowerCase().includes(searchLower) ||
           celeb.category.toLowerCase().includes(searchLower) ||
           (celeb.subcategory && celeb.subcategory.toLowerCase().includes(searchLower)) ||
           (celeb.tags && celeb.tags.some(tag => tag.toLowerCase().includes(searchLower)))
@@ -101,12 +101,12 @@ const Search: React.FC = () => {
       case 'price-high':
         sorted.sort((a, b) => b.minPrice - a.minPrice);
         break;
-      case 'rating':
-        sorted.sort((a, b) => b.rating - a.rating);
-        break;
-      case 'popularity':
-        sorted.sort((a, b) => b.reviewCount - a.reviewCount);
-        break;
+      // case 'rating':
+      //   sorted.sort((a, b) => b.rating - a.rating);
+      //   break;
+      // case 'popularity':
+      //   sorted.sort((a, b) => b.reviewCount - a.reviewCount);
+      //   break;
       default:
         break;
     }
@@ -138,9 +138,7 @@ const Search: React.FC = () => {
                   <SelectValue placeholder="Sort by" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="relevance">Relevance</SelectItem>
-                  <SelectItem value="price-low">Price: Low to High</SelectItem>
-                  <SelectItem value="price-high">Price: High to Low</SelectItem>
+                  <SelectItem value="relevance">Relevance</SelectItem>              
                   <SelectItem value="rating">Top Rated</SelectItem>
                   <SelectItem value="popularity">Most Popular</SelectItem>
                 </SelectContent>

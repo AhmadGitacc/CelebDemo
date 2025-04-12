@@ -97,20 +97,20 @@ const Footer: React.FC = () => {
               <li className="flex items-start">
                 <Mail className="h-5 w-5 mr-3 text-accent" />
                 <span className="text-primary-foreground/70 dark:text-white">
-                  hello@celebconnect.com
+                  support@joinyaza.com
                 </span>
               </li>
-              <li className="flex items-start">
+              {/* <li className="flex items-start">
                 <Phone className="h-5 w-5 mr-3 text-accent" />
                 <span className="text-primary-foreground/70  dark:text-white">
                   +1 (555) 123-4567
                 </span>
-              </li>
+              </li> */}
               <li className="flex items-start">
                 <MapPin className="h-5 w-5 mr-3 text-accent" />
                 <span className="text-primary-foreground/70 dark:text-white">
-                  1234 Celebrity Lane<br />
-                  Los Angeles, CA 90210
+                  Ikota Shopping Complex<br />
+                  Lekki, Lagos
                 </span>
               </li>
             </ul>

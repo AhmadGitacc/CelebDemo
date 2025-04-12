@@ -26,9 +26,11 @@ import { Badge } from '@/components/ui/badge';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { db } from "@/lib/firebase";
-import { collection, doc, getDoc, onSnapshot } from "firebase/firestore";
+import { collection, doc, getDoc, onSnapshot, updateDoc } from "firebase/firestore";
 import ReviewButton from './celebrity/Review';
 import CancelBookingButton from '../booking/CancelBooking';
+import ClientProfile from './client/ClientProfile';
+import { useToast } from '@/hooks/use-toast';
 
 
 interface Booking {
@@ -41,9 +43,9 @@ interface Booking {
   location: string;
   date: string;
   time: string;
-  package: [
+  package: {
     price: number,
-  ];
+  };
   status: string;
 }
 interface Celebrity {
@@ -57,32 +59,98 @@ interface Celebrity {
 const ClientDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('bookings');
   const navigate = useNavigate();
+  const { toast } = useToast();
   const { user } = useAuth();
   const [nextEvent, setNextEvent] = useState<string>('');
   const [favorites, setFavorites] = useState<any[]>([]);
+  const [completed, setCompleted] = useState<any[]>([]);
   const [pastBookings, setPastBookings] = useState<any[]>([]);
+  const [amountSpent, setAmountSpent] = useState<any>(0);
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [name, setName] = useState<any>(null);
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      if (!user) return;
+
+      const docRef = doc(db, "users", user.id);
+      const docSnap = await getDoc(docRef);
+
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setName(data.name);
+      }
+
+      setLoading(false);
+
+      toast({
+        title: 'Note:',
+        description: ' Ensure your profile Info is always Up to date',
+        className: "border border-green-400 text-green-800",
+      });
+    }
+
+    fetchUserData();
+  }, [user]);
 
   useEffect(() => {
     const unsubscribe = onSnapshot(
       collection(db, "bookings"),
       async (snapshot) => {
         try {
+          const now = new Date();
+          now.setHours(0, 0, 0, 0);
+
           const allBookings: Booking[] = snapshot.docs.map(doc => ({
             id: doc.id,
             ...(doc.data() as Omit<Booking, "id">),
           }));
 
-          // Filter bookings for this client
+          const updatePromises = allBookings.map(async (booking) => {
+            const bookingDate = new Date(booking.date);
+            bookingDate.setHours(0, 0, 0, 0);
+
+            const bookingRef = doc(db, "bookings", booking.id);
+
+            if (bookingDate < now && booking.status === "pending") {
+              await updateDoc(bookingRef, { status: "cancelled" });
+              toast({
+                title: "Booking Cancelled",
+                description: `Your booking with ${booking.celebrityName} was automatically cancelled because the date passed.`,
+                duration: 5000,
+              });
+            } else if (bookingDate < now && booking.status === "confirmed") {
+              await updateDoc(bookingRef, { status: "completed" });
+              toast({
+                title: "Booking Completed",
+                description: `Your booking with ${booking.celebrityName} has been marked as completed.`,
+                duration: 5000,
+              });
+            }
+
+          });
+
+          await Promise.all(updatePromises);
+
           const filtered = allBookings.filter(
-            booking => booking.clientId === user?.id && booking.status !== 'completed' && booking.status !== 'cancelled' && booking.status !== 'declined'
+            booking => booking.clientId === user?.id &&
+              booking.status !== "completed" &&
+              booking.status !== "cancelled" &&
+              booking.status !== "refunded" &&
+              booking.status !== "declined"
           );
+
           const pastFiltered = allBookings.filter(
-            booking => booking.clientId === user?.id && (booking.status === 'completed' || booking.status === 'cancelled' || booking.status === 'declined'));
+            booking => booking.clientId === user?.id && booking.status !== "pending"
+          );
+
+          const completeFiltered = allBookings.filter(
+            booking => booking.clientId === user?.id && booking.status === "completed"
+          );
 
           const userBookings = allBookings.filter(
-            booking => booking.clientId === user.id
+            booking => booking.clientId === user?.id
           );
 
           const uniqueCelebrityIds = [
@@ -91,36 +159,40 @@ const ClientDashboard: React.FC = () => {
 
           if (uniqueCelebrityIds.length === 0) {
             setFavorites([]);
-            return;
+          } else {
+            const celebRefs = uniqueCelebrityIds.map(id => doc(db, "celebrities", id));
+            const celebSnapshots = await Promise.all(celebRefs.map(ref => getDoc(ref)));
+
+            const matchedCelebs: Celebrity[] = celebSnapshots
+              .filter(snapshot => snapshot.exists())
+              .map(snapshot => ({
+                id: snapshot.id,
+                ...(snapshot.data() as Omit<Celebrity, "id">),
+              }));
+
+            setFavorites(matchedCelebs);
           }
 
-          // Fetch matching celebrity docs
-          const celebRefs = uniqueCelebrityIds.map(id => doc(db, "celebrities", id));
-          const celebSnapshots = await Promise.all(celebRefs.map(ref => getDoc(ref)));
+          const totalSpent = completeFiltered.reduce(
+            (sum, booking) => sum + (booking.package?.price || 0),
+            0
+          );    
 
-          const matchedCelebs: Celebrity[] = celebSnapshots
-            .filter(snapshot => snapshot.exists())
-            .map(snapshot => ({
-              id: snapshot.id,
-              ...(snapshot.data() as Omit<Celebrity, "id">),
-            }));
-
-          setFavorites(matchedCelebs);
-
+          setAmountSpent(totalSpent);
+          setCompleted(completeFiltered);
           setUpcomingBookings(filtered);
           setPastBookings(pastFiltered);
         } catch (error) {
-          console.error("Error fetching bookings:", error);
+          console.error("Error processing bookings:", error);
         }
       },
       (error) => {
         console.error("Error in real-time listener:", error);
-      },
+      }
     );
 
-    // Clean up listener on unmount
     return () => unsubscribe();
-  }, [user]);
+  }, [user?.id]);
 
   useEffect(() => {
     if (upcomingBookings.length > 0) {
@@ -134,7 +206,7 @@ const ClientDashboard: React.FC = () => {
         day: 'numeric',   // e.g., 7
       }).format(new Date(closestBooking.date));
 
-      setNextEvent(formattedDate);
+      setNextEvent(formattedDate + " - " + sortedBookings[0].time);
     }
   }, [upcomingBookings]);
 
@@ -146,6 +218,13 @@ const ClientDashboard: React.FC = () => {
           <Badge className="bg-green-500">
             <CheckCircle className="h-3 w-3 mr-1" />
             Confirmed
+          </Badge>
+        );
+      case 'refunded':
+        return (
+          <Badge variant='secondary'>
+            <CheckCircle className="h-3 w-3 mr-1" />
+            Refunded
           </Badge>
         );
       case 'pending':
@@ -185,9 +264,9 @@ const ClientDashboard: React.FC = () => {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Client Dashboard</h1>
+          <h1 className="text-3xl font-bold tracking-tight">Welcome, {name}</h1>
           <p className="text-muted-foreground mt-1">
-            Manage your celebrity bookings and communications
+            Manage your celebrity bookings and profile
           </p>
         </div>
 
@@ -204,9 +283,9 @@ const ClientDashboard: React.FC = () => {
         <GlassCard className="p-6">
           <div className="flex flex-col items-center text-center">
             <h3 className="font-medium mb-1">Total Spent</h3>
-            <div className="text-3xl font-bold mb-1">$48,500</div>
+            <div className="text-3xl font-bold mb-1">₦{amountSpent}</div>
             <p className="text-sm text-muted-foreground">
-              Across 3 bookings
+              Across {completed.length || 0} bookings
             </p>
           </div>
         </GlassCard>
@@ -222,10 +301,10 @@ const ClientDashboard: React.FC = () => {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-6">
+        <TabsList className="grid w-full grid-cols-3 mb-6">
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
-          {/* <TabsTrigger value="contracts">Contracts</TabsTrigger> */}
           <TabsTrigger value="favorites">Favorites</TabsTrigger>
+          <TabsTrigger value="profile">Profile</TabsTrigger>
         </TabsList>
 
         <TabsContent value="bookings" className="space-y-6">
@@ -259,15 +338,15 @@ const ClientDashboard: React.FC = () => {
                         <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-4">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">{booking.date}</span>
+                            <span className="text-sm">{new Date(booking.date).toDateString()}</span>
                           </div>
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 text-accent mr-2" />
                             <span className="text-sm">{booking.time}</span>
                           </div>
                           <div className="flex items-center col-span-2">
-                            <DollarSign className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">${booking.package.price.toLocaleString()}</span>
+                            ₦
+                            <span className="text-sm ml-1">{booking.package.price.toLocaleString()}</span>
                           </div>
                         </div>
 
@@ -284,7 +363,7 @@ const ClientDashboard: React.FC = () => {
               <Card>
                 <CardContent className="pt-6 text-center">
                   <p>You have no upcoming bookings.</p>
-                  <Link to='/'>
+                  <Link to='/search'>
                     <Button className="mt-4">Find Celebrities</Button>
                   </Link>
                 </CardContent>
@@ -323,15 +402,15 @@ const ClientDashboard: React.FC = () => {
                         <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-4">
                           <div className="flex items-center">
                             <Calendar className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">{booking.date}</span>
+                            <span className="text-sm">{new Date(booking.date).toDateString()}</span>
                           </div>
                           <div className="flex items-center">
                             <Clock className="h-4 w-4 text-accent mr-2" />
                             <span className="text-sm">{booking.time}</span>
                           </div>
                           <div className="flex items-center col-span-2">
-                            <DollarSign className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">${booking.package.price.toLocaleString()}</span>
+                            ₦
+                            <span className="text-sm ml-1">{booking.package.price.toLocaleString()}</span>
                           </div>
                         </div>
                         {booking.status === 'completed' && (
@@ -369,52 +448,6 @@ const ClientDashboard: React.FC = () => {
           </div>
         </TabsContent>
 
-        <TabsContent value="contracts" className="space-y-6">
-          <h2 className="text-xl font-semibold mb-4">Your Contracts</h2>
-          <div className="space-y-4">
-            <GlassCard className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-3 rounded-lg">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Performance Agreement - John Legend</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Private Concert on July 15, 2023</p>
-                    <div className="flex space-x-3 mt-2">
-                      <Badge variant="outline" className="text-green-600 border-green-300 bg-green-50">
-                        Signed
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">Last updated: June 28, 2023</span>
-                    </div>
-                  </div>
-                </div>
-                <Button variant="outline" size="sm">View</Button>
-              </div>
-            </GlassCard>
-
-            <GlassCard className="p-5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-start space-x-4">
-                  <div className="bg-primary/10 p-3 rounded-lg">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <h3 className="font-medium">Appearance Contract - Emma Watson</h3>
-                    <p className="text-sm text-muted-foreground mt-1">Brand Photoshoot on August 3, 2023</p>
-                    <div className="flex space-x-3 mt-2">
-                      <Badge variant="outline" className="text-yellow-600 border-yellow-300 bg-yellow-50">
-                        Awaiting Signature
-                      </Badge>
-                      <span className="text-xs text-muted-foreground">Expires in 3 days</span>
-                    </div>
-                  </div>
-                </div>
-                <Button size="sm">Sign Now</Button>
-              </div>
-            </GlassCard>
-          </div>
-        </TabsContent>
 
         <TabsContent value="favorites" className="space-y-6">
           <h2 className="text-xl font-semibold mb-4">Saved Celebrities</h2>
@@ -424,7 +457,7 @@ const ClientDashboard: React.FC = () => {
                 <GlassCard key={celebrity.id} className="p-0 overflow-hidden">
                   <div className="relative">
                     <img
-                      src={celebrity.profileImage || "https://via.placeholder.com/400x200"}
+                      src={celebrity.profileImage || '/assets/wizkid.jpg'}
                       alt={celebrity.name}
                       className="w-full h-48 object-cover object-center"
                     />
@@ -434,17 +467,7 @@ const ClientDashboard: React.FC = () => {
                     <p className="text-sm text-muted-foreground mb-3">
                       {celebrity.category} - {celebrity.subcategory}
                     </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <Star className="h-4 w-4 text-yellow-500 fill-yellow-500 mr-1" />
-                        <span className="text-sm font-medium">
-                          {celebrity.rating || "4.9"}
-                        </span>
-                        <span className="text-xs text-muted-foreground ml-1">
-                          ({celebrity.totalReviews || "0"})
-                        </span>
-                      </div>
-                    </div>
+                    
                     <Link className="flex justify-between mt-4" to={`/celebrities/${celebrity.id}`}>
                       <Button variant="outline" size="sm">
                         View Profile
@@ -463,6 +486,9 @@ const ClientDashboard: React.FC = () => {
             )}
 
           </div>
+        </TabsContent>
+        <TabsContent value="profile" className="space-y-6">
+          <ClientProfile />
         </TabsContent>
       </Tabs>
     </div>

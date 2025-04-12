@@ -1,14 +1,19 @@
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
-import AdminCelebrityUpload from './AdminCelebrityUpload';
+import AdminCelebrityUpload from './admin/AdminCelebrityUpload';
 import { Dialog, DialogTrigger, DialogContent } from '@radix-ui/react-dialog';
 import { Edit } from 'lucide-react';
+import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
+import { db, auth } from "@/lib/firebase";
+import RefundDialog from './admin/RefundDialog ';
+import PaymentDialog from './admin/PaymentDialog';
+import { useToast } from '@/hooks/use-toast';
 
 const data = [
   { name: 'Jan', bookings: 40, revenue: 2400 },
@@ -19,24 +24,170 @@ const data = [
   { name: 'Jun', bookings: 23, revenue: 3800 },
 ];
 
-const users = [
-  { id: 1, name: 'John Doe', email: 'john@example.com', status: 'active', role: 'client', date: '2023-04-15' },
-  { id: 2, name: 'Sarah Smith', email: 'sarah@example.com', status: 'active', role: 'celebrity', date: '2023-03-21' },
-  { id: 3, name: 'Michael Brown', email: 'michael@example.com', status: 'inactive', role: 'client', date: '2023-05-02' },
-  { id: 4, name: 'Emma Wilson', email: 'emma@example.com', status: 'active', role: 'celebrity', date: '2023-02-18' },
-  { id: 5, name: 'James Taylor', email: 'james@example.com', status: 'pending', role: 'client', date: '2023-05-19' },
-];
+interface UserInfo {
+  id: string;
+  role: string;
+  status: string;
+  // add other fields as needed
+}
+interface Booking {
+  status: string;
+  celebPaymentStatus: string;
+  clientName: string;
+  celebrityName: string;
+  date: string;
+  package: {
+    price: number;
+  };
+  [key: string]: any; // optional, to allow extra fields
+}
 
-const bookings = [
-  { id: 1, client: 'John Doe', celebrity: 'Davido', status: 'confirmed', date: '2023-06-15', amount: '$2,500' },
-  { id: 2, client: 'Sarah Smith', celebrity: 'Burna Boy', status: 'pending', date: '2023-06-22', amount: '$3,000' },
-  { id: 3, client: 'Michael Brown', celebrity: 'Tiwa Savage', status: 'completed', date: '2023-05-30', amount: '$1,800' },
-  { id: 4, client: 'Emma Wilson', celebrity: 'Wizkid', status: 'cancelled', date: '2023-06-10', amount: '$4,200' },
-  { id: 5, client: 'James Taylor', celebrity: 'Don Jazzy', status: 'confirmed', date: '2023-07-05', amount: '$2,100' },
-];
 
 const AdminDashboard: React.FC = () => {
   const [activeTab, setActiveTab] = useState('overview');
+  const { toast } = useToast();
+  const [loading, setLoading] = useState(true);
+  const [users, setUsers] = useState([]);
+  const [clients, setCLients] = useState([]);
+  const [celebrities, setCelebrities] = useState([]);
+  const [bookings, setBookings] = useState([]);
+  const [payments, setPayments] = useState([]);
+  const [payouts, setPayouts] = useState(0);
+  const [openRefundDialog, setOpenRefundDialog] = useState(false);
+  const [openPaymentDialog, setOpenPaymentDialog] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<any | null>(null);
+  const [selectedBooking2, setSelectedBooking2] = useState<any | null>(null);
+
+  useEffect(() => {
+    const usersRef = collection(db, "users");
+
+    const unsubscribe = onSnapshot(usersRef, (snapshot) => {
+      const allUsers: UserInfo[] = snapshot.docs.map(doc => ({
+        id: doc.id,
+        ...(doc.data() as Omit<UserInfo, "id">),
+      }));
+
+      const allActiveUsers = allUsers.filter(
+        userInfo => userInfo.status !== 'deleted'
+      );
+      const celebFiltered = allUsers.filter(
+        userInfo => userInfo.role === 'celebrity'
+      );
+      const clientFiltered = allUsers.filter(
+        userInfo => userInfo.role === 'client'
+      );
+
+      setUsers(allActiveUsers);
+      setCelebrities(celebFiltered);
+      setCLients(clientFiltered);
+      setLoading(false);
+    }, (error) => {
+      console.error("Error fetching users:", error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+
+  useEffect(() => {
+    const bookingsRef = collection(db, "bookings");
+
+    const unsubscribe = onSnapshot(
+      bookingsRef,
+      (snapshot) => {
+        const allBookings = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          ...(doc.data() as Booking),
+        }));
+
+        const statusOrder = ['completed', 'declined', 'cancelled'];
+
+        const sortedBookings = allBookings.sort((a, b) => {
+          const aIndex = statusOrder.indexOf(a.status);
+          const bIndex = statusOrder.indexOf(b.status);
+
+          const normalizedA = aIndex === -1 ? Infinity : aIndex;
+          const normalizedB = bIndex === -1 ? Infinity : bIndex;
+
+          // First, sort by payment status (unpaid before paid)
+          if (a.celebPaymentStatus !== 'paid' && b.celebPaymentStatus === 'paid') {
+            return -1;
+          }
+          if (a.celebPaymentStatus === 'paid' && b.celebPaymentStatus !== 'paid') {
+            return 1;
+          }
+
+          // Then sort by booking status
+          return normalizedA - normalizedB;
+        });
+
+
+        const completeFiltered = allBookings.filter(
+          booking => booking.status === "completed" && booking.celebPaymentStatus === 'paid'
+        );
+
+        const totalPaid = completeFiltered.reduce(
+          (sum, booking) => sum + (booking.package?.price || 0),
+          0
+        );
+
+        setBookings(sortedBookings);
+        setPayments(completeFiltered);
+        setPayouts(totalPaid);
+        setLoading(false);
+      },
+      (error) => {
+        console.error("Error fetching bookings:", error);
+        setLoading(false);
+      }
+    );
+
+    return () => unsubscribe();
+  }, []);
+
+
+  const deleteUser = async (userId) => {
+    // Ask for confirmation before proceeding
+    const confirmed = window.confirm("Are you sure you want to delete this user? This action cannot be undone.");
+
+    if (!confirmed) {
+      return; // If the user cancels, stop the deletion process
+    }
+
+    try {
+      // 1. Delete user data from Firestore 'users' collection
+      const userRef = doc(db, "users", userId);
+      await updateDoc(userRef, { status: "deleted" });  // Update status to 'deleted'
+
+      // 2. Check if the user is a celebrity (e.g., by checking their role)
+      const userDoc = await getDoc(userRef);
+      if (userDoc.exists && userDoc.data().role === 'celebrity') {
+        // 3. Delete the celebrity data from the 'celebrities' collection
+        const celebrityRef = doc(db, "celebrities", userId);
+        await deleteDoc(celebrityRef);
+      }
+
+      // 4. Delete all reviews where clientId matches userId
+      const reviewsRef = collection(db, "reviews");
+      const reviewQuery = query(reviewsRef, where("clientId", "==", userId));
+      const querySnapshot = await getDocs(reviewQuery);
+      querySnapshot.forEach(async (doc) => {
+        await deleteDoc(doc.ref);
+      });
+
+      toast({
+        title: 'User account deleted',
+      });
+
+      // // 5. Log out the user from Firebase Auth
+      // await auth.currentUser.delete();  // This deletes the user from Firebase Auth
+
+    } catch (error) {
+      console.error("Error deleting user: ", error);
+    }
+  };
+
 
   return (
     <div className="space-y-6">
@@ -54,20 +205,17 @@ const AdminDashboard: React.FC = () => {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <Card>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Revenue
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
-                <p className="text-xs text-muted-foreground">
-                  +20.1% from last month
-                </p>
+                <div className="text-2xl font-bold">₦{0}</div>
               </CardContent>
-            </Card>
+            </Card> */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -75,9 +223,9 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+2350</div>
+                <div className="text-2xl font-bold">+{bookings.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  +180.1% from last month
+                  Total amount of bookings
                 </p>
               </CardContent>
             </Card>
@@ -88,9 +236,9 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+12,234</div>
+                <div className="text-2xl font-bold">+{clients.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  +19% from last month
+                  Total number of registered clients
                 </p>
               </CardContent>
             </Card>
@@ -101,14 +249,14 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">+573</div>
+                <div className="text-2xl font-bold">+{celebrities.length}</div>
                 <p className="text-xs text-muted-foreground">
-                  +201 since last year
+                  Available Celebrities
                 </p>
               </CardContent>
             </Card>
           </div>
-
+          {/* 
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
             <Card className="col-span-4">
               <CardHeader>
@@ -182,8 +330,9 @@ const AdminDashboard: React.FC = () => {
                   </div>
                 </div>
               </CardContent>
-            </Card>
-          </div>
+              </Card>
+              </div>
+               */}
         </TabsContent>
 
         <TabsContent value="users" className="space-y-4">
@@ -202,7 +351,6 @@ const AdminDashboard: React.FC = () => {
                       <th className="text-left py-3 px-4">Name</th>
                       <th className="text-left py-3 px-4">Email</th>
                       <th className="text-left py-3 px-4">Role</th>
-                      <th className="text-left py-3 px-4">Status</th>
                       <th className="text-left py-3 px-4">Registered</th>
                       <th className="text-left py-3 px-4">Actions</th>
                     </tr>
@@ -214,17 +362,14 @@ const AdminDashboard: React.FC = () => {
                         <td className="py-3 px-4">{user.email}</td>
                         <td className="py-3 px-4 capitalize">{user.role}</td>
                         <td className="py-3 px-4">
-                          <Badge variant={
-                            user.status === 'active' ? 'default' :
-                              user.status === 'inactive' ? 'secondary' :
-                                'outline'
-                          }>
-                            {user.status}
-                          </Badge>
+                          {user.createdAt ? new Date(user.createdAt).toDateString() : 'N/A'}
                         </td>
-                        <td className="py-3 px-4">{user.date}</td>
                         <td className="py-3 px-4">
-                          <Button variant="outline" size="sm">Edit</Button>
+                          {user.role !== 'admin' && (
+                            <Button onClick={() => deleteUser(user.id)} variant="destructive" size="sm">
+                              Delete User
+                            </Button>
+                          )}
                         </td>
                       </tr>
                     ))}
@@ -236,16 +381,16 @@ const AdminDashboard: React.FC = () => {
         </TabsContent>
 
         <TabsContent value="bookings" className="space-y-4">
-          <Card className='w-fit'>
+          {/* <Card className='w-fit'>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">
                 Current Wallet Balance
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">$11,307.97</div>
+              <div className="text-2xl font-bold">₦</div>
             </CardContent>
-          </Card>
+          </Card> */}
           <Card className="overflow-hidden">
             <CardHeader>
               <CardTitle>Bookings Management</CardTitle>
@@ -265,29 +410,45 @@ const AdminDashboard: React.FC = () => {
                       <th className="text-left py-3 px-4">Status</th>
                       <th className="text-left py-3 px-4">Date</th>
                       <th className="text-left py-3 px-4">Amount</th>
+                      <th className="text-left py-3 px-4">Booking id</th>
                       <th className="text-left py-3 px-4">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {bookings.map((booking) => (
+                    {bookings.map((booking, i) => (
                       <tr key={booking.id} className="border-b hover:bg-muted/50">
-                        <td className="py-3 px-4">#{booking.id}</td>
-                        <td className="py-3 px-4">{booking.client}</td>
-                        <td className="py-3 px-4">{booking.celebrity}</td>
+                        <td className="py-3 px-4">#{i + 1}</td>
+                        <td className="py-3 px-4">{booking.clientName}</td>
+                        <td className="py-3 px-4">{booking.celebrityName}</td>
                         <td className="py-3 px-4">
                           <Badge variant={
                             booking.status === 'confirmed' ? 'default' :
                               booking.status === 'completed' ? 'secondary' :
-                                booking.status === 'cancelled' ? 'destructive' :
-                                  'outline'
+                                booking.status === 'declined' ? 'destructive' :
+                                  booking.status === 'refunded' ? 'secondary' :
+                                    booking.status === 'cancelled' ? 'destructive' :
+                                      'outline'
                           }>
                             {booking.status}
                           </Badge>
                         </td>
-                        <td className="py-3 px-4">{booking.date}</td>
-                        <td className="py-3 px-4">{booking.amount}</td>
+                        <td className="py-3 px-4">{new Date(booking.date).toDateString()}</td>
+                        <td className="py-3 px-4">₦{booking.package.price}</td>
+                        <td className="py-3 px-4">{booking.bookingId}</td>
                         <td className="py-3 px-4">
-                          <Button variant="outline" size="sm">Details</Button>
+                          {booking.status === 'cancelled' || booking.status === 'declined' ? (
+                            <Button className='bg-orange-400' onClick={() => {
+                              setSelectedBooking(booking);
+                              setOpenRefundDialog(true);
+                            }} size="sm">Process Refund</Button>
+                          ) : booking.status === 'completed' && booking.celebPaymentStatus !== 'paid' ? (
+                            <Button className='bg-blue-500' size="sm" onClick={() => {
+                              setSelectedBooking2(booking);
+                              setOpenPaymentDialog(true);
+                            }}>Process Payment</Button>
+                          ) : null}
+
+
                         </td>
                       </tr>
                     ))}
@@ -298,21 +459,46 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </TabsContent>
 
+        {selectedBooking && (
+          <RefundDialog
+            clientId={selectedBooking.clientId}
+            bookingId={selectedBooking.id}
+            refundAmount={selectedBooking.package.price}
+            isOpen={openRefundDialog}
+            onOpenChange={(open) => {
+              setOpenRefundDialog(open);
+              if (!open) setSelectedBooking(null);
+            }}
+          />
+        )}
+        {selectedBooking2 && (
+          <PaymentDialog
+            celebId={selectedBooking2.celebrityId}
+            bookingId={selectedBooking2.id}
+            paymentAmount={selectedBooking2.package.price}
+            isOpen={openPaymentDialog}
+            onOpenChange={(open) => {
+              setOpenPaymentDialog(open);
+              if (!open) setSelectedBooking2(null);
+            }}
+          />
+        )}
+
         <TabsContent value="payments" className="space-y-4">
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-2">
+            {/* <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
                   Total Revenue
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$45,231.89</div>
+                <div className="text-2xl font-bold">₦{0}</div>
                 <p className="text-xs text-muted-foreground">
                   +20.1% from last month
                 </p>
               </CardContent>
-            </Card>
+            </Card> */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-sm font-medium">
@@ -320,9 +506,9 @@ const AdminDashboard: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold">$33,923.92</div>
+                <div className="text-2xl font-bold">₦{payouts}</div>
                 <p className="text-xs text-muted-foreground">
-                  75% of total revenue
+                  total amout paid out
                 </p>
               </CardContent>
             </Card>
@@ -350,46 +536,25 @@ const AdminDashboard: React.FC = () => {
                     </tr>
                   </thead>
                   <tbody>
-                    <tr className="border-b">
-                      <td className="py-3 px-4">#TX12345</td>
-                      <td className="py-3 px-4">2023-06-15</td>
-                      <td className="py-3 px-4">John Doe</td>
-                      <td className="py-3 px-4">Davido</td>
-                      <td className="py-3 px-4">$2,500</td>
-                      <td className="py-3 px-4">
-                        <Badge>Completed</Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-3 px-4">#TX12346</td>
-                      <td className="py-3 px-4">2023-06-22</td>
-                      <td className="py-3 px-4">Sarah Smith</td>
-                      <td className="py-3 px-4">Burna Boy</td>
-                      <td className="py-3 px-4">$3,000</td>
-                      <td className="py-3 px-4">
-                        <Badge variant="outline">Pending</Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-3 px-4">#TX12347</td>
-                      <td className="py-3 px-4">2023-05-30</td>
-                      <td className="py-3 px-4">Michael Brown</td>
-                      <td className="py-3 px-4">Tiwa Savage</td>
-                      <td className="py-3 px-4">$1,800</td>
-                      <td className="py-3 px-4">
-                        <Badge>Completed</Badge>
-                      </td>
-                    </tr>
-                    <tr className="border-b">
-                      <td className="py-3 px-4">#TX12348</td>
-                      <td className="py-3 px-4">2023-06-10</td>
-                      <td className="py-3 px-4">Emma Wilson</td>
-                      <td className="py-3 px-4">Wizkid</td>
-                      <td className="py-3 px-4">$4,200</td>
-                      <td className="py-3 px-4">
-                        <Badge variant="destructive">Refunded</Badge>
-                      </td>
-                    </tr>
+                    {payments.map((payment) => (
+                      <tr className="border-b">
+                        <td className="py-3 px-4">{payment.bookingId}</td>
+                        <td className="py-3 px-4"><td className="px-6 py-4">
+                          {new Date(payment.date).toLocaleDateString('en-US', {
+                            month: '2-digit',
+                            day: '2-digit',
+                            year: 'numeric',
+                          })}
+                        </td>
+                        </td>
+                        <td className="py-3 px-4">{payment.clientName}</td>
+                        <td className="py-3 px-4">{payment.celebrityName}</td>
+                        <td className="py-3 px-4">{payment.package?.price}</td>
+                        <td className="py-3 px-4">
+                          <Badge variant="default">{payment.celebPaymentStatus}</Badge>
+                        </td>
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>

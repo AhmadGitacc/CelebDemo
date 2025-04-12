@@ -20,7 +20,12 @@ export default function AboutPage() {
                 <p className="text-lg max-w-3xl">
                     Have questions or want to collaborate? Reach out to us today!
                 </p>
-                <Button className="mt-6 bg-accent">Contact Us</Button>
+                <Button
+                    className="mt-6 bg-accent"
+                    onClick={() => window.location.href = 'mailto:support@joinyaza.com?subject=Celebrity%20Joining%20Yaza%20Request&body=Hello,%0A%0AI%20am%20"Your%20name%20and%20stagename"%20and%20im%20intrested%20in%20joining%20Yaza%20......'}
+                >
+                    Contact Us
+                </Button>
             </section>
         </PageTransition>
     );

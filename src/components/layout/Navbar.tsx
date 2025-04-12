@@ -142,11 +142,11 @@ const Navbar: React.FC = () => {
                   <Calendar className="h-4 w-4 mr-2 text-gray-500" />
                   Bookings
                 </DropdownMenuItem>
-
+{/* 
                 <DropdownMenuItem onClick={() => navigate('/dashboard')} className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition rounded-md">
                   <Wallet className="h-4 w-4 mr-2 text-gray-500" />
                   Wallet
-                </DropdownMenuItem>
+                </DropdownMenuItem> */}
 
                 <DropdownMenuSeparator className="border-gray-200" />
 

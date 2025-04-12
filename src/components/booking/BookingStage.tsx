@@ -83,6 +83,7 @@ export const BookingStage: React.FC<BookingStageProps> = ({ services, celebrityI
                 eventDesc: eventDescription,
                 location: eventLocation,
                 status: "pending",
+                celebPaymentStatus: "pending",
                 createdAt: new Date().toISOString(),
             });
 
@@ -112,19 +113,15 @@ export const BookingStage: React.FC<BookingStageProps> = ({ services, celebrityI
                         {services.map((pkg) => (
                             <GlassCard
                                 key={pkg.id}
-                                className={`p-6 transition-all duration-300 ${pkg.isPopular ? 'border-accent/30 relative' : ''
-                                    } ${selectedPackage?.id === pkg.id ? 'ring-2 ring-accent' : ''}`}
+                                className={`p-6 transition-all duration-300 ₦{pkg.isPopular ? 'border-accent/30 relative' : ''
+                                    } ₦{selectedPackage?.id === pkg.id ? 'ring-2 ring-accent' : ''}`}
                                 interactive
                                 onClick={() => handleSelectPackage(pkg)}
                             >
-                                {pkg.isPopular && (
-                                    <Badge className="absolute top-1 right-3 bg-accent">
-                                        Most Popular
-                                    </Badge>
-                                )}
+
                                 <div className="flex justify-between items-start mb-2">
                                     <h4 className="font-semibold text-lg">{pkg.title}</h4>
-                                    <div className="text-xl font-bold">${pkg.price.toLocaleString()}</div>
+                                    <div className="text-xl font-bold">₦{pkg.price.toLocaleString()}</div>
                                 </div>
                                 <p className="text-muted-foreground mb-4">{pkg.description}</p>
                                 <div className="flex items-center text-sm text-muted-foreground mb-4">
@@ -179,7 +176,7 @@ export const BookingStage: React.FC<BookingStageProps> = ({ services, celebrityI
                                     </div>
                                     <div className="text-right">
                                         <div className="text-sm text-muted-foreground">Price</div>
-                                        <div className="font-bold">${selectedPackage.price.toLocaleString()}</div>
+                                        <div className="font-bold">₦{selectedPackage.price.toLocaleString()}</div>
                                     </div>
                                 </div>
                             </GlassCard>

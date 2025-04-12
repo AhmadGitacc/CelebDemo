@@ -10,6 +10,8 @@ import { useAuth } from '@/contexts/AuthContext';
 import PageTransition from '@/components/ui-custom/PageTransition';
 import { LogIn, UserPlus, Check, Loader2 } from 'lucide-react';
 import GlassCard from '@/components/ui-custom/GlassCard';
+import { sendPasswordResetEmail } from 'firebase/auth';
+import { auth } from '@/lib/firebase'; 
 
 const Auth: React.FC = () => {
   const { login, signup, isLoading } = useAuth();
@@ -20,7 +22,8 @@ const Auth: React.FC = () => {
   const [activeTab, setActiveTab] = useState<'login' | 'signup'>(
     location.pathname.includes('sign-up') ? 'signup' : 'login'
   );
-
+  const [loading, setLoading] = useState(false);
+  
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
   const [loginPassword, setLoginPassword] = useState('');
@@ -75,6 +78,39 @@ const Auth: React.FC = () => {
 
     if (success) {
       navigate('/dashboard');
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!loginEmail) {
+      toast({
+        title: 'Email Required',
+        description: 'Please enter your email address.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await sendPasswordResetEmail(auth, loginEmail);
+      toast({
+        title: 'Password Reset Email Sent',
+        description: 'Check your inbox for a password reset link.',
+      });
+      setEmail(''); // Clear the email input after sending
+    } catch (error) {
+      console.error('Error sending password reset email:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to send password reset email. Please try again.',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -133,7 +169,7 @@ const Auth: React.FC = () => {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <Label htmlFor="login-password">Password</Label>
-                      <Button variant="link" className="p-0 h-auto text-xs" type="button">
+                      <Button onClick={handleResetPassword} variant="link" className="p-0 h-auto text-xs" type="button">
                         Forgot password?
                       </Button>
                     </div>

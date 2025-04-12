@@ -11,6 +11,7 @@ interface CelebrityData {
     category: string;
     subcategory: string;
     avatar?: string;
+    profileImage: string;
     rating?: number;
     reviews?: number;
 }
@@ -42,28 +43,20 @@ const CelebrityProfileCard = ({ celebId }: { celebId: string }) => {
         <div className="flex flex-col items-center text-center">
             <div className="relative inline-block mb-4">
                 <Avatar className="h-24 w-24">
-                    <AvatarImage src={celebData.avatar || "fallback_url"} />
+                    <AvatarImage src={celebData.profileImage || "fallback_url"} />
                     <AvatarFallback>{celebData.name?.[0]}</AvatarFallback>
                 </Avatar>
-                <Button
+                {/* <Button
                     variant="outline"
                     size="icon"
                     className="absolute bottom-0 right-0 h-8 w-8 rounded-full bg-background"
                 >
                     <Edit className="h-4 w-4" />
-                </Button>
+                </Button> */}
             </div>
 
             <h2 className="text-xl font-bold">{celebData.name}</h2>
             <p className="text-muted-foreground mb-4">{celebData.category} | {celebData.subcategory}</p>
-
-            <div className="flex items-center justify-center mb-4">
-                <Star className="h-5 w-5 text-yellow-500 fill-yellow-500 mr-1" />
-                <span className="font-medium">{celebData.rating || "0.0"}</span>
-                <span className="text-muted-foreground ml-1">
-                    ({celebData.reviews || "0"} reviews)
-                </span>
-            </div>
 
             <Badge variant="outline" className="mb-4">
                 <CheckCircle className="h-3 w-3 mr-1" />

@@ -46,6 +46,7 @@ const CelebrityProfile: React.FC = () => {
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [averageRating, setAverageRating] = useState(0);
+  const [gallery, setGallery] = useState<{ id: string; url: string }[]>([]);
 
   useEffect(() => {
     const fetchCelebrityAndServices = async () => {
@@ -100,6 +101,19 @@ const CelebrityProfile: React.FC = () => {
     }
   }, [id]);
 
+  useEffect(() => {
+    const fetchGallery = async () => {
+      const querySnapshot = await getDocs(collection(db, "celebrities", id, "gallery"));
+      const images = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        url: doc.data().url,
+      }));
+      setGallery(images);
+    };
+
+
+    fetchGallery();
+  }, [id]);
 
   useEffect(() => {
     if (reviews.length > 0) {
@@ -113,36 +127,6 @@ const CelebrityProfile: React.FC = () => {
   // This is mock data - in a real app this would come from an API
   const celebrity = {
     isVerified: true,
-    isInstantBooking: false,
-    isAvailableToday: false,
-    followersCount: '450K',
-    languages: ['English', 'Spanish'],
-    gallery: [
-      'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
-      'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
-      'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
-      'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80'
-    ],
-    videos: [
-      {
-        id: '1',
-        thumbnail: 'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
-        title: 'Live at Madison Square Garden',
-        views: '1.2M'
-      },
-      {
-        id: '2',
-        thumbnail: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1770&q=80',
-        title: 'Acoustic Session - "Memories"',
-        views: '870K'
-      }
-    ],
-    socials: {
-      instagram: '@Wizkid',
-      twitter: '@Wizkidmusic',
-      youtube: 'WizkidMusic',
-      website: 'Wizkid.com'
-    },
   };
 
 
@@ -169,7 +153,7 @@ const CelebrityProfile: React.FC = () => {
             <div className="relative">
               <div className="w-full h-72 bg-gradient-to-r from-accent/20 to-primary/10 rounded-xl overflow-hidden">
                 <img
-                  src={celebrity.gallery[0]}
+                  src={celebrityInfo.coverImage}
                   alt="Cover"
                   className="w-full h-full object-cover object-center mix-blend-overlay opacity-60"
                 />
@@ -177,7 +161,7 @@ const CelebrityProfile: React.FC = () => {
 
               <div className="absolute -bottom-16 left-8 flex items-end">
                 <Avatar className="h-32 w-32 border-4 border-background rounded-xl shadow-lg">
-                  <AvatarImage src={celebrityInfo.image} alt={celebrityInfo.name} className="object-cover" />
+                  <AvatarImage src={celebrityInfo.profileImage} alt={celebrityInfo.name} className="object-cover" />
                   <AvatarFallback>{celebrityInfo.name.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="ml-4 mb-4">
@@ -204,8 +188,8 @@ const CelebrityProfile: React.FC = () => {
               <div className="flex flex-wrap items-center gap-6 mb-6">
                 <div className="flex items-center">
                   <Star className="h-5 w-5 text-yellow-500 fill-yellow-500 mr-1" />
-                  <span className="font-medium mr-1">{averageRating || "0.0"} /</span>
-                  <span className="text-muted-foreground">{reviews.length || "0.0"} review(s)</span>
+                  <span className="font-medium mr-1">{averageRating || "0.0"} - </span>
+                  <span className="text-muted-foreground">{reviews.length || "0"} review(s)</span>
                 </div>
 
                 <div className="flex items-center">
@@ -213,16 +197,12 @@ const CelebrityProfile: React.FC = () => {
                   <span>{celebrityInfo.location}</span>
                 </div>
 
-                <div className="flex items-center">
-                  <Music className="h-5 w-5 text-accent mr-1" />
-                  <span>{celebrity.followersCount} followers</span>
-                </div>
               </div>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-8">
                   <TabsTrigger value="overview">Overview</TabsTrigger>
-                  <TabsTrigger value="media">Photos & Videos</TabsTrigger>
+                  <TabsTrigger value="media">Gallery</TabsTrigger>
                   <TabsTrigger value="reviews">Reviews</TabsTrigger>
                   <TabsTrigger value="details">Details</TabsTrigger>
                 </TabsList>
@@ -238,27 +218,22 @@ const CelebrityProfile: React.FC = () => {
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Languages</h3>
                         <div className="flex flex-wrap gap-2">
-                          {celebrity.languages.map((language) => (
-                            <Badge key={language} variant="secondary">
-                              {language}
-                            </Badge>
-                          ))}
+
+                          <Badge variant="secondary">
+                            {celebrityInfo.languages}
+                          </Badge>
                         </div>
                       </div>
 
-                      <div>
-                        <h3 className="text-sm font-medium text-muted-foreground mb-2">Experience</h3>
-                        <p>10+ years</p>
-                      </div>
 
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Response Rate</h3>
-                        <p>95%</p>
+                        <p>100%</p>
                       </div>
 
                       <div>
                         <h3 className="text-sm font-medium text-muted-foreground mb-2">Response Time</h3>
-                        <p>Within 24 hours</p>
+                        <p>As soon as possible</p>
                       </div>
                     </div>
                   </GlassCard>
@@ -269,19 +244,15 @@ const CelebrityProfile: React.FC = () => {
                       <div className="space-y-4">
                         <div className="flex items-center">
                           <Instagram className="h-5 w-5 text-pink-500 mr-3" />
-                          <span>{celebrity.socials.instagram}</span>
+                          <span>{celebrityInfo.insta}</span>
                         </div>
                         <div className="flex items-center">
                           <Twitter className="h-5 w-5 text-blue-400 mr-3" />
-                          <span>{celebrity.socials.twitter}</span>
+                          <span>{celebrityInfo.x}</span>
                         </div>
                         <div className="flex items-center">
                           <Youtube className="h-5 w-5 text-red-500 mr-3" />
-                          <span>{celebrity.socials.youtube}</span>
-                        </div>
-                        <div className="flex items-center">
-                          <Globe className="h-5 w-5 text-accent mr-3" />
-                          <span>{celebrity.socials.website}</span>
+                          <span>{celebrityInfo.youtube}</span>
                         </div>
                       </div>
                     </GlassCard>
@@ -290,10 +261,10 @@ const CelebrityProfile: React.FC = () => {
                   <GlassCard className="p-6">
                     <h2 className="text-xl font-semibold mb-4">Featured Photos</h2>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {celebrity.gallery.slice(0, 4).map((image, index) => (
-                        <div key={index} className="relative aspect-square group overflow-hidden rounded-lg">
+                      {gallery.slice(0, 4).map((image, index) => (
+                        <div key={image.id} className="relative aspect-square group overflow-hidden rounded-lg">
                           <img
-                            src={image}
+                            src={image.url}
                             alt={`${celebrityInfo.name} ${index + 1}`}
                             className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                           />
@@ -302,6 +273,7 @@ const CelebrityProfile: React.FC = () => {
                               variant="ghost"
                               size="icon"
                               className="h-9 w-9 rounded-full bg-white text-primary"
+                              onClick={() => setActiveTab('media')}
                             >
                               <ImageIcon className="h-4 w-4" />
                             </Button>
@@ -355,10 +327,10 @@ const CelebrityProfile: React.FC = () => {
                   <GlassCard className="p-6">
                     <h2 className="text-xl font-semibold mb-6">Photo Gallery</h2>
                     <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                      {celebrity.gallery.map((image, index) => (
-                        <div key={index} className="relative aspect-square group overflow-hidden rounded-lg">
+                      {gallery.map((image, index) => (
+                        <div key={image.id} className="relative aspect-square group overflow-hidden rounded-lg">
                           <img
-                            src={image}
+                            src={image.url}
                             alt={`${celebrityInfo.name} ${index + 1}`}
                             className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
                           />
@@ -370,39 +342,6 @@ const CelebrityProfile: React.FC = () => {
                             >
                               <ImageIcon className="h-4 w-4" />
                             </Button>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </GlassCard>
-
-                  <GlassCard className="p-6">
-                    <h2 className="text-xl font-semibold mb-6">Videos</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                      {celebrity.videos.map((video) => (
-                        <div key={video.id} className="relative group">
-                          <div className="relative rounded-lg overflow-hidden aspect-video">
-                            <img
-                              src={video.thumbnail}
-                              alt={video.title}
-                              className="w-full h-full object-cover object-center transition-transform duration-300 group-hover:scale-105"
-                            />
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-12 w-12 rounded-full bg-white/20 backdrop-blur-sm border border-white/30 text-white hover:bg-white/30 hover:text-white"
-                              >
-                                <Play className="h-5 w-5 ml-0.5" />
-                              </Button>
-                            </div>
-                          </div>
-                          <h3 className="font-medium mt-3">{video.title}</h3>
-                          <div className="flex items-center text-sm text-muted-foreground">
-                            <Mic className="h-3.5 w-3.5 mr-1.5" />
-                            <span>Jason Ludwig</span>
-                            <span className="mx-2">•</span>
-                            <span>{video.views} views</span>
                           </div>
                         </div>
                       ))}
@@ -433,60 +372,6 @@ const CelebrityProfile: React.FC = () => {
                             {reviews.length || "0.0"} review(s)
                           </div>
                         </div>
-                        {/* <div className="grid gap-2 flex-1">
-                          <div className="flex items-center gap-2">
-                            <div className="flex">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className="h-3 w-3 text-yellow-500 fill-yellow-500"
-                                />
-                              ))}
-                            </div>
-                            <div className="w-full max-w-[180px]">
-                              <div className="h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
-                                <div className="h-full bg-yellow-500 rounded-full" style={{ width: '75%' }}></div>
-                              </div>
-                            </div>
-                            <span className="text-sm">75%</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex">
-                              {[...Array(4)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className="h-3 w-3 text-yellow-500 fill-yellow-500"
-                                />
-                              ))}
-                              <Star className="h-3 w-3 text-gray-300" />
-                            </div>
-                            <div className="w-full max-w-[180px]">
-                              <div className="h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
-                                <div className="h-full bg-yellow-500 rounded-full" style={{ width: '20%' }}></div>
-                              </div>
-                            </div>
-                            <span className="text-sm">20%</span>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className="flex">
-                              {[...Array(3)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className="h-3 w-3 text-yellow-500 fill-yellow-500"
-                                />
-                              ))}
-                              {[...Array(2)].map((_, i) => (
-                                <Star key={i} className="h-3 w-3 text-gray-300" />
-                              ))}
-                            </div>
-                            <div className="w-full max-w-[180px]">
-                              <div className="h-2 bg-muted-foreground/20 rounded-full overflow-hidden">
-                                <div className="h-full bg-yellow-500 rounded-full" style={{ width: '5%' }}></div>
-                              </div>
-                            </div>
-                            <span className="text-sm">5%</span>
-                          </div>
-                        </div> */}
                       </div>
                     </div>
 
@@ -531,19 +416,7 @@ const CelebrityProfile: React.FC = () => {
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <li className="flex items-center">
                             <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            <span className="text-sm">Professional microphone</span>
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            <span className="text-sm">Acoustic guitar</span>
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            <span className="text-sm">Basic sound equipment</span>
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
-                            <span className="text-sm">Personal monitor</span>
+                            <span className="text-sm">{celebrityInfo.equipment}</span>
                           </li>
                         </ul>
                       </div>
@@ -553,19 +426,7 @@ const CelebrityProfile: React.FC = () => {
                         <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
                           <li className="flex items-center">
                             <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">Adequate stage space (min. 8x10ft)</span>
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">Power outlets within 15ft of performance area</span>
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">Changing/preparation room</span>
-                          </li>
-                          <li className="flex items-center">
-                            <CheckCircle className="h-4 w-4 text-accent mr-2" />
-                            <span className="text-sm">Parking for equipment loading</span>
+                            <span className="text-sm">{celebrityInfo.venue}</span>
                           </li>
                         </ul>
                       </div>

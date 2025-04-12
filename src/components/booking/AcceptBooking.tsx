@@ -46,7 +46,7 @@ const AcceptBookingButton: React.FC<AcceptBookingButtonProps> = ({ bookingId, al
     return (
         <Button onClick={handleAcceptBooking}>
             <Check className="h-4 w-4 mr-2"/>
-            Accept
+            Accept Booking
         </Button>
     );
 };
