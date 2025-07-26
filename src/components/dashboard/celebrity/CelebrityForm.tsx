@@ -31,6 +31,42 @@ const CelebrityForm = () => {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [accountName, setAccountName] = useState("");
   const [bank, setBank] = useState("");
+const [bankCode, setBankCode] = useState(''); // Store the selected bank's bank code
+  
+
+  // Bank options with their codes
+  const bankOptions = [
+    { name: 'Access Bank', code: '058' },
+    { name: 'Citibank Nigeria', code: '023' },
+    { name: 'Diamond Bank', code: '063' },
+    { name: 'Zenith Bank', code: '057' },
+    { name: 'EcoBank', code: '050' },
+    { name: 'Fidelity Bank', code: '070' },
+    { name: 'United Bank for Africa', code: '033' },
+    { name: 'Wema Bank', code: '035' },
+    { name: 'First Bank', code: '011' },
+    { name: 'Guaranty Trust Bank', code: '058' },
+    { name: 'Heritage Bank', code: '030' },
+    { name: 'Jaiz Bank', code: '301' },
+    { name: 'Keystone Bank', code: '082' },
+    { name: 'Lapo Microfinance Bank', code: '700' },
+    { name: 'Lockton Insurance Nigeria', code: '999' },
+    { name: 'Mainstreet Bank', code: '064' },
+    { name: 'Mobil Oil Nigeria', code: '088' },
+    { name: 'Polaris Bank', code: '076' },
+    { name: 'Standard Chartered Bank', code: '068' },
+    { name: 'Sterling Bank', code: '232' },
+    { name: 'Union Bank', code: '032' },
+  ];
+
+  // Handle bank selection change
+  const handleBankChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedBank = e.target.value;
+    setBank(selectedBank);
+    // Set the bank code based on the selected bank
+    const selectedBankOption = bankOptions.find(option => option.name === selectedBank);
+    setBankCode(selectedBankOption ? selectedBankOption.code : '');
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
@@ -64,6 +100,7 @@ const CelebrityForm = () => {
         setAccountName(data.accountName || "");
         setAccountNumber(data.accountNumber || "");
         setBank(data.bank || "");
+        setBankCode(data.bankCode || "");
       }
 
       setLoading(false);
@@ -102,7 +139,8 @@ const CelebrityForm = () => {
         youtube,
         accountName,
         accountNumber,
-        bank
+        bank,
+        bankCode
       });
 
       toast({
@@ -225,8 +263,20 @@ const CelebrityForm = () => {
               <Input value={accountName} onChange={(e) => setAccountName(e.target.value)} />
             </div>
             <div className="space-y-1.5">
-              <Label htmlFor="name">Bank Name</Label>
-              <Input value={bank} onChange={(e) => setBank(e.target.value)} />
+              <Label htmlFor="bank">Bank Name</Label>
+              <select
+                value={bank}
+                onChange={handleBankChange}
+                className="w-full p-2 border rounded"
+              >
+                <option value="">{bank || 'Select Bank'}</option>
+                {bankOptions.map((option) => (
+                  <option key={option.code} value={option.name}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+
             </div>
           </div>
 

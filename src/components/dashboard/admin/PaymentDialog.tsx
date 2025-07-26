@@ -11,6 +11,7 @@ import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { functions } from "@/lib/firebase";
 
 interface PaymentDialogProps {
     celebId: string;
@@ -55,24 +56,30 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ celebId, bookingId, payme
         fetchClient();
     }, [celebId, isOpen]);
 
-    const handleSaveChanges = async () => {
-        const docRef = doc(db, "bookings", bookingId);
 
+    const handlePayment = async () => {
         try {
-            await updateDoc(docRef, {
-                celebPaymentStatus: "paid",
+            // Call the processTransfer function from Firebase Functions
+            const result = await functions.httpsCallable("processTransfer")({
+                celebId,
+                bookingId,
+                paymentAmount,
             });
 
-            toast({
-                title: 'Payment Successful',
-                className: "bg-green-100 border border-green-400 text-green-800",
-            });
-        } catch (err) {
-            console.error("Error saving changes:", err);
+            if (result.success) {
+                toast({
+                    title: "Payment Successful",
+                    className: "bg-green-100 border border-green-400 text-green-800",
+                });
 
+                // Optionally close the dialog after payment is confirmed
+                onOpenChange(false);
+            }
+        } catch (error) {
+            console.error("Payment error:", error);
             toast({
-                title: 'Error saving changes',
-                variant: 'destructive'
+                title: "Error processing payment",
+                variant: "destructive",
             });
         }
     };
@@ -105,7 +112,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ celebId, bookingId, payme
                             <div className="flex justify-between">
                                 <span className="font-semibold">Account Number:</span>
                                 <span className="text-gray-600">{celebData.accountNumber}</span>
-                            </div>                           
+                            </div>
                             <div className="flex justify-between">
                                 <span className="font-semibold">Payment Amount:</span>
                                 <span className="text-gray-600">₦{paymentAmount}</span>
@@ -113,7 +120,7 @@ const PaymentDialog: React.FC<PaymentDialogProps> = ({ celebId, bookingId, payme
                         </div>
 
                         <div className="pt-4 text-right">
-                            <Button onClick={handleSaveChanges} size="sm" className="bg-green-600 hover:bg-green-700 text-white">
+                            <Button onClick={handlePayment} size="sm" className="bg-green-600 hover:bg-green-700 text-white">
                                 Click to confirm Payment
                             </Button>
                         </div>

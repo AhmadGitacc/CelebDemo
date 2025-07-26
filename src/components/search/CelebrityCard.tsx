@@ -13,6 +13,7 @@ import { db } from "@/lib/firebase";
 export interface Celebrity {
   id: string;
   stageName: string;
+  name: string;
   category: string;
   subcategory?: string;
   profileImage: string;
@@ -36,6 +37,7 @@ const CelebrityCard: React.FC<CelebrityCardProps> = ({
   const {
     id,
     stageName,
+    name,
     category,
     subcategory,
     profileImage,
@@ -51,35 +53,35 @@ const CelebrityCard: React.FC<CelebrityCardProps> = ({
   const [averageRating, setAverageRating] = useState(0);
 
   useEffect(() => {
-      const reviewsRef = collection(db, "reviews");
-      const reviewsQuery = query(reviewsRef, where("celebrityId", "==", id));
-  
-      const unsubscribe = onSnapshot(
-        reviewsQuery,
-        (snapshot) => {
-          const reviewsList = snapshot.docs.map(doc => ({
-            id: doc.id,
-            ...doc.data(),
-          }));
-  
-          setReviews(reviewsList);
-        },
-        (error) => {
-          console.error("Error fetching reviews:", error);
-        }
-      );
-  
-      return () => unsubscribe();
-    }, [id]);
-  
-    useEffect(() => {
-      if (reviews.length > 0) {
-        const total = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
-        const avg = total / reviews.length;
-        setAverageRating(avg);
+    const reviewsRef = collection(db, "reviews");
+    const reviewsQuery = query(reviewsRef, where("celebrityId", "==", id));
+
+    const unsubscribe = onSnapshot(
+      reviewsQuery,
+      (snapshot) => {
+        const reviewsList = snapshot.docs.map(doc => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+
+        setReviews(reviewsList);
+      },
+      (error) => {
+        console.error("Error fetching reviews:", error);
       }
-    }, [reviews]);
-  
+    );
+
+    return () => unsubscribe();
+  }, [id]);
+
+  useEffect(() => {
+    if (reviews.length > 0) {
+      const total = reviews.reduce((sum, review) => sum + (review.rating || 0), 0);
+      const avg = total / reviews.length;
+      setAverageRating(avg);
+    }
+  }, [reviews]);
+
 
   return (
     <GlassCard
@@ -94,13 +96,13 @@ const CelebrityCard: React.FC<CelebrityCardProps> = ({
             className="w-full h-64 object-cover object-center rounded-lg mb-4"
           />
 
-          {isAvailableToday && (
+          {!stageName && (
             <Badge
               variant="outline"
               className="absolute top-3 left-3 bg-white/80 backdrop-blur-sm text-foreground border-0"
             >
               <Clock className="h-3 w-3 mr-1 text-green-600" />
-              Available Today
+              Coming Soon
             </Badge>
           )}
         </div>
@@ -108,13 +110,12 @@ const CelebrityCard: React.FC<CelebrityCardProps> = ({
         <div className="flex items-start justify-between mb-2">
           <div>
             <h3 className="text-lg font-semibold mb-0.5 flex items-center">
-              {stageName || 'Coming Soon'}
-              {isVerified && (
-                <CheckCircle className="h-4 w-4 ml-1 text-accent" />
-              )}
+              {stageName || name}
+              <CheckCircle className="h-4 w-4 ml-1 text-accent" />
             </h3>
             <div className="text-sm text-muted-foreground">
-              {category}{subcategory ? ` · ${subcategory}` : ''}
+              {category.charAt(0).toUpperCase() + category.slice(1)}
+              {subcategory ? ` · ${subcategory.charAt(0).toUpperCase() + subcategory.slice(1)}` : ''}
             </div>
           </div>
 

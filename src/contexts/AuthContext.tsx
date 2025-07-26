@@ -1,6 +1,7 @@
 import {
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
+  sendEmailVerification,
   signOut,
   updateProfile,
 } from 'firebase/auth';
@@ -96,24 +97,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
         password
       );
 
-      await updateProfile(userCredential.user, { displayName: name });
+      const user = userCredential.user;
+
+      await updateProfile(user, { displayName: name });
 
       const newUser: User = {
-        id: userCredential.user.uid,
+        id: user.uid,
         name,
         email,
-        role: 'client', // always register as client
+        role: 'client',
         avatar: generateAvatar(name, email),
         createdAt: new Date().toISOString(),
-        status: 'active', // default status is active
+        status: 'active',
       };
 
       await setDoc(doc(db, 'users', newUser.id), newUser);
 
-      setUser(newUser);
+      // ✅ Send email verification
+      await sendEmailVerification(userCredential.user);
+
+      // ✅ Log the user out
+      await signOut(auth);
+
       toast({
         title: 'Signup successful',
-        description: `Welcome, ${name}`,
+        description: 'Please check your email and verify your address before logging in.',
       });
 
       return true;
@@ -128,6 +136,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
       setIsLoading(false);
     }
   };
+
 
   const login = async (
     email: string,
@@ -157,6 +166,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({
           });
           setUser(null);
           return false; // Don't proceed with login
+        }
+
+        if (!userCredential.user.emailVerified) {
+          await signOut(auth); // Prevent access
+          toast({
+            title: 'Email not verified',
+            description: 'Please verify your email before logging in.',
+            variant: 'destructive',
+          });
+          // ✅ Send email verification
+          await sendEmailVerification(userCredential.user);
+          return false;
         }
 
         setUser(userData);

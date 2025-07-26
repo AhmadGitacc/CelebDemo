@@ -22,7 +22,7 @@ const Footer: React.FC = () => {
               <div className="w-36 h-28 overflow-hidden">
                 <img
                   src="/assets/WhiteLogo.svg"
-                  alt="Burna Boy"
+                  alt="Logo"
                   className="w-full h-full object-cover object-center"
                 />
               </div>
@@ -31,18 +31,18 @@ const Footer: React.FC = () => {
               Connecting you with world-class celebrities and influencers for your events and campaigns.
             </p>
             <div className="flex space-x-4">
-              <a href="#" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="Instagram">
+              <a href="https://www.instagram.com/joinyaza?igsh=MTgzd2Z5Y2l3aWxrbQ==" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="Instagram">
                 <Instagram className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="Twitter">
+              <a href="https://x.com/joinyaza?s=21" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="Twitter">
                 <Twitter className="h-5 w-5" />
               </a>
-              <a href="#" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="Facebook">
+              {/* <a href="#" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="Facebook">
                 <Facebook className="h-5 w-5" />
               </a>
               <a href="#" className="text-primary-foreground/60 hover:text-accent dark:text-white transition-colors" aria-label="YouTube">
                 <Youtube className="h-5 w-5" />
-              </a>
+              </a> */}
             </div>
           </div>
 
@@ -64,12 +64,7 @@ const Footer: React.FC = () => {
                   className="text-primary-foreground/70 dark:text-white hover:text-accent transition-colors">
                   How It Works
                 </Link>
-              </li>
-              {/* <li>
-                <Link to="/pricing" className="text-primary-foreground/70 hover:text-accent transition-colors">
-                  Pricing
-                </Link>
-              </li> */}
+              </li>              
             </ul>
           </div>
 
@@ -81,13 +76,6 @@ const Footer: React.FC = () => {
                   About Us
                 </Link>
               </li>
-              {/*
-              <li>
-                <Link to="/press" className="text-primary-foreground/70 hover:text-accent transition-colors">
-                  Press
-                </Link>
-              </li>
-              */}
             </ul>
           </div>
 
@@ -97,7 +85,8 @@ const Footer: React.FC = () => {
               <li className="flex items-start">
                 <Mail className="h-5 w-5 mr-3 text-accent" />
                 <span className="text-primary-foreground/70 dark:text-white">
-                  support@joinyaza.com
+
+                  <a href="mailto:support@joinyaza.com" className='text-blue-100'>support@joinyaza.com</a>
                 </span>
               </li>
               {/* <li className="flex items-start">

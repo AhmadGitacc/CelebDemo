@@ -307,6 +307,7 @@ export const BookingStage: React.FC<BookingStageProps> = ({ services, celebrityI
                             <PaymentFlow
                                 amount={selectedPackage.price}
                                 onComplete={handlePaymentComplete}
+                                userEmail={user.email}
                             />
                         </div>
                     )}

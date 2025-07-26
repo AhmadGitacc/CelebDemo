@@ -7,29 +7,28 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContaine
 import { Avatar } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import AdminCelebrityUpload from './admin/AdminCelebrityUpload';
-import { Dialog, DialogTrigger, DialogContent } from '@radix-ui/react-dialog';
-import { Edit } from 'lucide-react';
-import { collection, deleteDoc, doc, getDoc, getDocs, onSnapshot, query, updateDoc, where } from 'firebase/firestore';
-import { db, auth } from "@/lib/firebase";
+import { collection, onSnapshot, } from 'firebase/firestore';
+import { db, auth, functions } from "@/lib/firebase";
 import RefundDialog from './admin/RefundDialog ';
 import PaymentDialog from './admin/PaymentDialog';
 import { useToast } from '@/hooks/use-toast';
+import { httpsCallable } from "firebase/functions";
 
-const data = [
-  { name: 'Jan', bookings: 40, revenue: 2400 },
-  { name: 'Feb', bookings: 30, revenue: 1398 },
-  { name: 'Mar', bookings: 20, revenue: 9800 },
-  { name: 'Apr', bookings: 27, revenue: 3908 },
-  { name: 'May', bookings: 18, revenue: 4800 },
-  { name: 'Jun', bookings: 23, revenue: 3800 },
-];
+// const data = [
+//   { name: 'Jan', bookings: 40, revenue: 2400 },
+//   { name: 'Feb', bookings: 30, revenue: 1398 },
+//   { name: 'Mar', bookings: 20, revenue: 9800 },
+//   { name: 'Apr', bookings: 27, revenue: 3908 },
+//   { name: 'May', bookings: 18, revenue: 4800 },
+//   { name: 'Jun', bookings: 23, revenue: 3800 },
+// ];  
 
 interface UserInfo {
   id: string;
   role: string;
   status: string;
   // add other fields as needed
-}
+}  
 interface Booking {
   status: string;
   celebPaymentStatus: string;
@@ -38,9 +37,9 @@ interface Booking {
   date: string;
   package: {
     price: number;
-  };
+  };  
   [key: string]: any; // optional, to allow extra fields
-}
+}  
 
 
 const AdminDashboard: React.FC = () => {
@@ -65,17 +64,17 @@ const AdminDashboard: React.FC = () => {
       const allUsers: UserInfo[] = snapshot.docs.map(doc => ({
         id: doc.id,
         ...(doc.data() as Omit<UserInfo, "id">),
-      }));
+      }));  
 
       const allActiveUsers = allUsers.filter(
         userInfo => userInfo.status !== 'deleted'
-      );
+      );  
       const celebFiltered = allUsers.filter(
-        userInfo => userInfo.role === 'celebrity'
-      );
+        userInfo => userInfo.role === 'celebrity' && userInfo.status !== 'deleted' 
+      );  
       const clientFiltered = allUsers.filter(
         userInfo => userInfo.role === 'client'
-      );
+      );  
 
       setUsers(allActiveUsers);
       setCelebrities(celebFiltered);
@@ -84,10 +83,10 @@ const AdminDashboard: React.FC = () => {
     }, (error) => {
       console.error("Error fetching users:", error);
       setLoading(false);
-    });
+    });  
 
     return () => unsubscribe();
-  }, []);
+  }, []);  
 
 
   useEffect(() => {
@@ -99,7 +98,7 @@ const AdminDashboard: React.FC = () => {
         const allBookings = snapshot.docs.map((doc) => ({
           id: doc.id,
           ...(doc.data() as Booking),
-        }));
+        }));  
 
         const statusOrder = ['completed', 'declined', 'cancelled'];
 
@@ -113,80 +112,96 @@ const AdminDashboard: React.FC = () => {
           // First, sort by payment status (unpaid before paid)
           if (a.celebPaymentStatus !== 'paid' && b.celebPaymentStatus === 'paid') {
             return -1;
-          }
+          }  
           if (a.celebPaymentStatus === 'paid' && b.celebPaymentStatus !== 'paid') {
             return 1;
-          }
+          }  
 
           // Then sort by booking status
           return normalizedA - normalizedB;
-        });
+        });  
 
 
         const completeFiltered = allBookings.filter(
           booking => booking.status === "completed" && booking.celebPaymentStatus === 'paid'
-        );
+        );  
 
         const totalPaid = completeFiltered.reduce(
           (sum, booking) => sum + (booking.package?.price || 0),
           0
-        );
+        );  
 
         setBookings(sortedBookings);
         setPayments(completeFiltered);
         setPayouts(totalPaid);
         setLoading(false);
-      },
+      },  
       (error) => {
         console.error("Error fetching bookings:", error);
         setLoading(false);
-      }
-    );
+      }  
+    );  
 
     return () => unsubscribe();
-  }, []);
+  }, []);  
 
 
-  const deleteUser = async (userId) => {
-    // Ask for confirmation before proceeding
-    const confirmed = window.confirm("Are you sure you want to delete this user? This action cannot be undone.");
+  // const deleteUser = async (userId) => {
+  //   // Ask for confirmation before proceeding  
+  //   const confirmed = window.confirm("Are you sure you want to delete this user? This action cannot be undone.");
 
-    if (!confirmed) {
-      return; // If the user cancels, stop the deletion process
-    }
+  //   if (!confirmed) {
+  //     return; // If the user cancels, stop the deletion process  
+  //   }
 
-    try {
-      // 1. Delete user data from Firestore 'users' collection
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, { status: "deleted" });  // Update status to 'deleted'
+  //   try {
+  //     // 1. Delete user data from Firestore 'users' collection  
+  //     const userRef = doc(db, "users", userId);
+  //     await updateDoc(userRef, { status: "deleted" });  // Update status to 'deleted'
 
-      // 2. Check if the user is a celebrity (e.g., by checking their role)
-      const userDoc = await getDoc(userRef);
-      if (userDoc.exists && userDoc.data().role === 'celebrity') {
-        // 3. Delete the celebrity data from the 'celebrities' collection
-        const celebrityRef = doc(db, "celebrities", userId);
-        await deleteDoc(celebrityRef);
-      }
+  //     // 2. Check if the user is a celebrity 
+  //     const userDoc = await getDoc(userRef);
+  //     if (userDoc.exists && userDoc.data().role === 'celebrity') {
+  //       // 3. Delete the celebrity data from the 'celebrities' collection  
+  //       const celebrityRef = doc(db, "celebrities", userId);
+  //       await deleteDoc(celebrityRef);
+  //     }
 
-      // 4. Delete all reviews where clientId matches userId
-      const reviewsRef = collection(db, "reviews");
-      const reviewQuery = query(reviewsRef, where("clientId", "==", userId));
-      const querySnapshot = await getDocs(reviewQuery);
-      querySnapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
-      });
+  //     // 4. Delete all reviews where clientId matches userId
+  //     const reviewsRef = collection(db, "reviews");
+  //     const reviewQuery = query(reviewsRef, where("clientId", "==", userId));
+  //     const querySnapshot = await getDocs(reviewQuery);
+  //     querySnapshot.forEach(async (doc) => {
+  //       await deleteDoc(doc.ref);  
+  //     });
 
-      toast({
-        title: 'User account deleted',
-      });
+  //     toast({
+  //       title: 'User account deleted',  
+  //     });
 
-      // // 5. Log out the user from Firebase Auth
-      // await auth.currentUser.delete();  // This deletes the user from Firebase Auth
+  //     // // 5. Log out the user from Firebase Auth
+  //     // await auth.currentUser.delete();  // This deletes the user from Firebase Auth
 
-    } catch (error) {
-      console.error("Error deleting user: ", error);
-    }
-  };
+  //   } catch (error) {
+  //     console.error("Error deleting user: ", error);  
+  //   }
+  // };
+
+const deleteUser = async (userId: string) => {
+  const confirmed = window.confirm("Are you sure? This action is permanent.");
+  if (!confirmed) return;
+
+  try {
+    const deleteUserFn = httpsCallable(functions, "deleteUser");
+    const result = await deleteUserFn({ userId });
+    console.log(result.data);
+    toast({ title: "User deleted successfully." });
+  } catch (error) {
+    console.error("Error:", error);
+    toast({ title: "Failed to delete user", variant: "destructive" });
+  }
+};
+
 
 
   return (

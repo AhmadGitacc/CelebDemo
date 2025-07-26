@@ -432,7 +432,7 @@ const CelebrityProfile: React.FC = () => {
                       </div>
                     </div>
                   </GlassCard>
-
+{/* 
                   <GlassCard className="p-6">
                     <h2 className="text-xl font-semibold mb-4">Booking Policies</h2>
                     <div className="space-y-5">
@@ -457,7 +457,7 @@ const CelebrityProfile: React.FC = () => {
                         </p>
                       </div>
                     </div>
-                  </GlassCard>
+                  </GlassCard> */}
                 </TabsContent>
               </Tabs>
             </div>

@@ -7,11 +7,12 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/components/ui/use-toast';
 import { CheckCircle, ImageIcon } from 'lucide-react';
-import { auth, db } from '@/lib/firebase';
-import { createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import { auth, db, functions } from '@/lib/firebase';
+import { createUserWithEmailAndPassword, sendEmailVerification, updateProfile } from 'firebase/auth';
 import { doc, setDoc } from 'firebase/firestore';
 import ImageUpload from './ImgUpload';
 import ImgUpload from './ImgUpload';
+import { httpsCallable } from 'firebase/functions';
 
 const AdminCelebrityUpload: React.FC = () => {
   const [profileData, setProfileData] = useState({
@@ -40,11 +41,93 @@ const AdminCelebrityUpload: React.FC = () => {
     setProfileData((prev) => ({ ...prev, [type]: value }));
   };
 
+  // const handleSubmit = async (e: React.FormEvent) => {
+  //   e.preventDefault();
+  //   setSubmitting(true);
+
+  //   // Validation
+  //   if (!profileData.name || !profileData.email || !profileData.password || !profileData.bio) {
+  //     toast({
+  //       title: 'Missing Information',
+  //       description: 'Please fill in all required fields.',
+  //       variant: 'destructive',
+  //     });
+  //     setSubmitting(false);
+  //     return;
+  //   }
+
+  //   try {
+  //     // 1. Create user in Firebase Authentication (using email and password)
+  //     const userCredential = await createUserWithEmailAndPassword(auth, profileData.email, profileData.password);
+
+
+  //     // 2. Set the profile information (name, etc.)
+  //     await updateProfile(userCredential.user, {
+  //       displayName: profileData.name,
+  //     });
+
+  //     // Step 1: Create the user document in the 'users' collection with minimal data
+  //     const userDocRef = await setDoc(doc(db, 'users', userCredential.user.uid), {
+  //       name: profileData.name,
+  //       email: profileData.email,
+  //       role: 'celebrity',
+  //       avatar: profileData.profileImage,
+  //       createdAt: new Date().toISOString()
+  //     });
+
+  //     // 3. Create a Firestore document for the celebrity profile
+  //     const newCelebrity = {
+  //       name: profileData.name,
+  //       category: profileData.category,
+  //       bio: profileData.bio,
+  //       profileImage: profileData.profileImage, // You can add default until image upload is available
+  //       coverImage: profileData.coverImage, // You can add default until image upload is available
+  //       userId: userCredential.user.uid,
+  //     };
+
+  //     await setDoc(doc(db, 'celebrities', userCredential.user.uid), newCelebrity);  // Add the document to Firestore
+
+  //     // ✅ 3. Send email verification
+  //     await sendEmailVerification(userCredential.user);
+  //     toast({
+  //       title: "Verification Email Sent",
+  //       description: "A verification email has been sent to the celebrity's email address.",
+  //     });
+
+  //     setSubmitting(false);
+  //     setSuccess(true);
+  //     toast({
+  //       title: 'Celebrity Profile Created',
+  //       description: `Successfully created profile for ${profileData.name}.`,
+  //     });
+
+  //     // Reset form after success
+  //     setTimeout(() => {
+  //       setSuccess(false);
+  //       setProfileData({
+  //         name: '',
+  //         category: 'music',
+  //         email: '',
+  //         password: '',
+  //         bio: '',
+  //         profileImage: '',
+  //         coverImage: '',
+  //       });
+  //     }, 2000);
+  //   } catch (error) {
+  //     setSubmitting(false);
+  //     toast({
+  //       title: 'Error',
+  //       description: 'There was an error creating the celebrity account. Please try again.' + error,
+  //       variant: 'destructive',
+  //     });
+  //   }
+  // };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
 
-    // Validation
     if (!profileData.name || !profileData.email || !profileData.password || !profileData.bio) {
       toast({
         title: 'Missing Information',
@@ -56,43 +139,47 @@ const AdminCelebrityUpload: React.FC = () => {
     }
 
     try {
-      // 1. Create user in Firebase Authentication (using email and password)
-      const userCredential = await createUserWithEmailAndPassword(auth, profileData.email, profileData.password);
-
-      // 2. Set the profile information (name, etc.)
-      await updateProfile(userCredential.user, {
-        displayName: profileData.name,
-      });
-
-      // Step 1: Create the user document in the 'users' collection with minimal data
-      const userDocRef = await setDoc(doc(db, 'users', userCredential.user.uid), {
+      // 🔥 Call the Cloud Function to create the user
+      const createUser = httpsCallable(functions, "createUserWithEmailPassword");
+      const response: any = await createUser({
+        email: profileData.email,
+        password: profileData.password,
         name: profileData.name,
-        email: profileData.email, 
-        role: 'celebrity', 
-        avatar: profileData.profileImage, 
-        createdAt: new Date().toISOString() 
       });
 
-      // 3. Create a Firestore document for the celebrity profile
+      const uid = response.data.uid;
+
+      // ✅ Create user document in 'users' collection
+      await setDoc(doc(db, 'users', uid), {
+        name: profileData.name,
+        email: profileData.email,
+        role: 'celebrity',
+        avatar: profileData.profileImage,
+        createdAt: new Date().toISOString()
+      });
+
+      // ✅ Create celebrity profile in 'celebrities' collection
       const newCelebrity = {
         name: profileData.name,
         category: profileData.category,
         bio: profileData.bio,
-        profileImage: profileData.profileImage, // You can add default until image upload is available
-        coverImage: profileData.coverImage, // You can add default until image upload is available
-        userId: userCredential.user.uid, 
+        profileImage: profileData.profileImage,
+        coverImage: profileData.coverImage,
+        userId: uid,
       };
 
-      await setDoc(doc(db, 'celebrities', userCredential.user.uid), newCelebrity);  // Add the document to Firestore
+      await setDoc(doc(db, 'celebrities', uid), newCelebrity);
 
-      setSubmitting(false);
-      setSuccess(true);
+      // ✅ Show success toast
       toast({
-        title: 'Celebrity Profile Created',
+        title: "Celebrity Profile Created",
         description: `Successfully created profile for ${profileData.name}.`,
       });
 
-      // Reset form after success
+      setSuccess(true);
+      setSubmitting(false);
+
+      // ✅ Reset form
       setTimeout(() => {
         setSuccess(false);
         setProfileData({
@@ -106,13 +193,13 @@ const AdminCelebrityUpload: React.FC = () => {
         });
       }, 2000);
     } catch (error) {
-      console.error('Error creating celebrity account:', error);
-      setSubmitting(false);
+      console.error(error);
       toast({
         title: 'Error',
         description: 'There was an error creating the celebrity account. Please try again.',
         variant: 'destructive',
       });
+      setSubmitting(false);
     }
   };
 
@@ -188,11 +275,16 @@ const AdminCelebrityUpload: React.FC = () => {
                       <SelectValue placeholder="Select category" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="music">Music</SelectItem>
-                      <SelectItem value="acting">Acting</SelectItem>
-                      <SelectItem value="sports">Sports</SelectItem>
-                      <SelectItem value="comedy">Comedy</SelectItem>
-                      <SelectItem value="influencer">Influencer</SelectItem>
+                      <SelectItem value="music">Musician</SelectItem>
+                      <SelectItem value="acting">Music Producer</SelectItem>
+                      <SelectItem value="acting">Record Label</SelectItem>
+                      <SelectItem value="acting">Actor</SelectItem>
+                      <SelectItem value="acting">Actress</SelectItem>
+                      <SelectItem value="sports">Athlete</SelectItem>
+                      <SelectItem value="comedy">Influencer</SelectItem>
+                      <SelectItem value="comedy">Comedian</SelectItem>
+                      <SelectItem value="comedy">Content Creator</SelectItem>
+                      <SelectItem value="comedy">Streamer</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>

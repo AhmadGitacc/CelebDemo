@@ -11,6 +11,8 @@ import { db } from "@/lib/firebase";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/lib/firebase"; // make sure functions is exported from your firebase config
 
 interface RefundDialogProps {
     clientId: string;
@@ -60,10 +62,20 @@ const RefundDialog: React.FC<RefundDialogProps> = ({ clientId, bookingId, refund
     }, [clientId, isOpen]);
 
     const handleSaveChanges = async () => {
-        const docRef = doc(db, "bookings", bookingId);
+        if (!clientId || !refundAmount) return;
+
+        const processRefund = httpsCallable(functions, "processRefund");
 
         try {
-            await updateDoc(docRef, {
+            // Call the cloud function
+            const result = await processRefund({
+                clientId,
+                amount: refundAmount,
+            });
+
+            console.log("Refund result:", result);
+
+            await updateDoc(doc(db, "bookings", bookingId), {
                 status: "refunded",
             });
 
@@ -71,11 +83,13 @@ const RefundDialog: React.FC<RefundDialogProps> = ({ clientId, bookingId, refund
                 title: 'Refund Successful',
                 className: "bg-green-100 border border-green-400 text-green-800",
             });
-        } catch (err) {
-            console.error("Error saving changes:", err);
 
+            onOpenChange(false); // close the dialog
+        } catch (err: any) {
+            console.error("Refund error:", err.message || err);
             toast({
-                title: 'Error saving changes',
+                title: 'Refund Failed',
+                description: err.message || "Could not process refund",
                 variant: 'destructive'
             });
         }

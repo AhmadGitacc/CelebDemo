@@ -18,9 +18,6 @@ import {
   CheckCircle,
   X,
   Star,
-  FileText,
-  DollarSign,
-  Zap
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Link, useNavigate } from 'react-router-dom';

@@ -81,7 +81,7 @@ const Index: React.FC = () => {
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                     <p className="text-white font-bold text-lg">Davido</p>
-                    <p className="text-white/90 text-sm">Music</p>
+                    <p className="text-white/90 text-sm">Musician</p>
                   </div>
                 </div>
                 <div
@@ -93,7 +93,7 @@ const Index: React.FC = () => {
                   />
                   <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
                     <p className="text-white font-bold text-lg">Burna Boy</p>
-                    <p className="text-white/90 text-sm">Music</p>
+                    <p className="text-white/90 text-sm">Musician</p>
                   </div>
                 </div>
               </div>
@@ -152,7 +152,7 @@ const Index: React.FC = () => {
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold mb-4">Why Choose Us</h2>
             <p className="text-gray-600 max-w-2xl mx-auto">
-              At [Company Name], we go beyond just booking talent—we create unforgettable experiences. Here’s why we stand out:
+              At Yaza, we go beyond just booking talent—we create unforgettable experiences. Here’s why we stand out:
             </p>
           </div>
 

@@ -1,109 +1,60 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { CreditCard, Lock, Shield, CheckCircle } from 'lucide-react';
+import { Lock, Shield, CheckCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import PaystackPop from '@paystack/inline-js'
 
 interface PaymentFlowProps {
   amount: number;
+  userEmail: string;
   onComplete?: () => void;
   className?: string;
 }
 
 const PaymentFlow: React.FC<PaymentFlowProps> = ({
   amount,
+  userEmail,
   onComplete,
   className
 }) => {
   const [processing, setProcessing] = useState(false);
   const [completed, setCompleted] = useState(false);
-  const [hasClickedOnce, setHasClickedOnce] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // First click: open Paystack in new tab and change button text
-    if (!hasClickedOnce) {
-      setHasClickedOnce(true);
-      window.open("https://paystack.com/pay/ev9jspf9ra", "_blank");
-      return;
-    }
-
-    // Second click: simulate payment confirmation
-    setProcessing(true);
-    setTimeout(() => {
-      setProcessing(false);
-      setCompleted(true);
-
-      setTimeout(() => {
-        if (onComplete) onComplete();
-      }, 4000);
-    }, 3000);
-  };
 
   const getServiceFee = () => {
-    return amount * 0.01; // 1% service fee
+    return amount * 0.01;
   };
 
   const getTotalAmount = () => {
     return amount + getServiceFee();
   };
 
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setProcessing(true);
+
+    const paystack = new PaystackPop();
+    paystack.newTransaction({
+      key: import.meta.env.VITE_PAYSTACK_PUBLIC_KEY, // Make sure you set this in your .env
+      amount: getTotalAmount() * 100, // in kobo
+      email: userEmail,
+      onSuccess: (transaction) => {
+        setCompleted(true);
+        setProcessing(false);
+        console.log('Payment successful! Transaction:', transaction);
+        if (onComplete) onComplete();
+      },
+      onCancel: () => {
+        setProcessing(false);
+      },
+    });
+  };
+
   return (
     <div className={cn("space-y-6", className)}>
       {!completed ? (
         <form onSubmit={handleSubmit}>
-          {/* <div className="mb-6">
-            <h3 className="font-semibold text-lg mb-2">Payment Method</h3>
-            <div className="flex items-center space-x-2 mb-4">
-              <CreditCard className="h-5 w-5 text-accent" />
-              <span className="font-medium">Credit / Debit Card</span>
-            </div>
-
-            <div className="grid gap-4">
-              <div className="grid gap-2">
-                <Label htmlFor="card-number">Card Number</Label>
-                <Input
-                  id="card-number"
-                  placeholder="1234 5678 9012 3456"
-                  className="h-10"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="grid gap-2">
-                  <Label htmlFor="expiry">Expiry Date</Label>
-                  <Input
-                    id="expiry"
-                    placeholder="MM/YY"
-                    className="h-10"
-                  />
-                </div>
-                <div className="grid gap-2">
-                  <Label htmlFor="cvc">CVC</Label>
-                  <Input
-                    id="cvc"
-                    placeholder="123"
-                    className="h-10"
-                  />
-                </div>
-              </div>
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name on Card</Label>
-                <Input
-                  id="name"
-                  placeholder="Name as appears on card"
-                  className="h-10"
-                />
-              </div>
-            </div>
-          </div>
-
-          <Separator className="my-6" /> */}
-
           <div className="space-y-3 mb-6">
             <h3 className="font-semibold text-lg mb-3">Payment Summary</h3>
             <div className="flex justify-between">
@@ -140,9 +91,8 @@ const PaymentFlow: React.FC<PaymentFlowProps> = ({
                   <span className="loading-dot"></span>
                 </span>
               </span>
-            ) : hasClickedOnce ? 'Confirm Payment' : 'Pay Now'}
+            ) : 'Pay Now'}
           </Button>
-
         </form>
       ) : (
         <div className="text-center py-8 animate-fade-in">
@@ -154,9 +104,7 @@ const PaymentFlow: React.FC<PaymentFlowProps> = ({
             Your booking request is made, wait for celebrity confirmation and hold on to the proof of payment.
           </p>
           <Link to='/dashboard'>
-            <Button
-              className="w-full"
-            >
+            <Button className="w-full">
               View Booking Details
             </Button>
           </Link>
